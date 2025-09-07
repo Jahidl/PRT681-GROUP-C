@@ -1,0 +1,541 @@
+TEST - Individual] 
+
+Research on Testing Methodologies 
+
+Manual Testing
+    Process of executing test cases without automation tools.  
+    Relies on human observation to detect discrepancies.  
+    Applied for exploratory, usability, and ad hoc validation.  
+
+Automated Testing
+    Execution of tests using automation scripts or frameworks.  
+    Reduces repetitive effort, improves consistency, accelerates execution.  
+    Applied for regression, load, and large-scale validation.  
+
+Functional Testing
+    Ensures the system works according to functional requirements.  
+    Focuses on inputs, outputs, workflows, and expected behaviours.  
+    Applied to verify features like login, checkout, and transactions.  
+
+Non-Functional Testing
+    Evaluates system qualities beyond functional behaviour.  
+    Covers performance, scalability, usability, and security aspects.  
+    Applied to validate reliability under varied load and conditions.  
+
+Regression Testing
+    Re-testing after changes to confirm stability of existing features.  
+    Detects unintended side effects from modifications.  
+    Applied continuously during iterative and agile development.  
+
+User Acceptance Testing (UAT)
+    Conducted by end-users to validate business requirements.  
+    Confirms system readiness for real-world use.  
+    Applied as the final phase before deployment.  
+
+Unit Testing
+    Testing of individual code modules or components.  
+    Provides fast feedback at the smallest granularity.  
+    Applied by developers during implementation.  
+
+Integration Testing
+    Verifies interactions between integrated modules.  
+    Focuses on data flow, interface compatibility, and dependencies.  
+    Applied after unit testing to ensure cohesive behaviour.  
+
+System Testing
+    End-to-end validation of the complete system.  
+    Ensures functional and non-functional requirements are satisfied.  
+    Applied in test environments simulating production.  
+
+Smoke Testing
+    High-level check of critical system functionalities.  
+    Ensures build stability before deeper testing.  
+    Applied after deployment of a new build.  
+
+Sanity Testing
+    Focused check on recently modified features.  
+    Validates fixes or enhancements without exhaustive coverage.  
+    Applied before proceeding to full regression testing.  
+
+Exploratory Testing
+    Simultaneous learning, design, and execution of tests.  
+    Relies on tester intuition and domain knowledge.  
+    Applied for uncovering defects not easily scripted.  
+
+Ad Hoc Testing
+    Informal testing without predefined cases.  
+    Depends entirely on tester’s creativity and experience.  
+    Applied for rapid checks in unstable builds.  
+
+Performance Testing
+    Measures system responsiveness and stability under workload.  
+    Identifies latency, throughput, and bottlenecks.  
+    Applied to validate speed and reliability.  
+
+Load Testing
+    Validates behaviour under expected user load.  
+    Determines system capacity and throughput.  
+    Applied to confirm handling of normal operating conditions.  
+
+Stress Testing
+    Tests limits of the system under extreme load.  
+    Identifies breaking points and recovery capability.  
+    Applied to evaluate robustness and error handling.  
+
+Security Testing
+    Identifies vulnerabilities and weaknesses in software.  
+    Focuses on authentication, authorization, data protection.  
+    Applied to safeguard against threats and exploits.  
+
+Compatibility Testing
+    Validates operation across environments, devices, and browsers.  
+    Ensures consistent behaviour in varied configurations.  
+    Applied widely in web and mobile applications.  
+
+Usability Testing
+    Evaluates ease of use from the end-user perspective.  
+    Focuses on navigation, accessibility, and user satisfaction.  
+    Applied to improve product adoption and experience.  
+
+Acceptance Testing
+    Confirms compliance with business goals and contracts.  
+    May include alpha and beta testing phases.  
+    Applied to gain stakeholder approval.  
+
+Alpha Testing
+    Conducted internally before release to external users.  
+    Detects issues in early development stages.  
+    Applied by QA teams and developers.  
+
+Beta Testing
+    Conducted by real users in external environments.  
+    Provides feedback on usability, reliability, and acceptance.  
+    Applied before final product release.  
+
+Recovery Testing
+    Validates system recovery from failures or crashes.  
+    Focuses on backup, failover, and continuity features.  
+    Applied to ensure resilience in production.  
+
+Localization Testing
+    Confirms system adapts to local language, culture, formats.  
+    Includes checks for text, currency, date, and cultural rules.  
+    Applied for global product releases.  
+
+Globalization Testing
+    Ensures software works across multiple regions and locales.  
+    Validates support for international data and inputs.  
+    Applied for worldwide compatibility.  
+
+[TEST - Individual] 
+
+Research on test cases and write sample test cases for your product and for your BA user stories and share with your team. 
+
+
+Functional Test Cases
+	TC001 - Add Product to Cart
+	Preconditions: User is logged in, product stock > 0
+	Steps:
+	  1. Navigate to product page
+	  2. Click "Add to Cart"
+	Expected Result: Product is added to cart, cart count updates, stock reduces.
+
+	TC002 - Add Out-of-Stock Product
+	Preconditions: Product stock = 0
+	Steps:
+ 	 1. Navigate to product page
+ 	 2. Click "Add to Cart"
+	Expected Result: System prevents action, “Out of Stock” message shown.
+
+	TC003 - Update Quantity in Cart
+	Preconditions: Product already in cart
+	Steps:
+	  1. Go to cart
+	  2. Change quantity
+	  3. Click "Update"
+	Expected Result: Quantity updates, total price recalculated, stock adjusted.
+
+	TC004 - Remove Product from Cart
+	Preconditions: Product already in cart	
+	Steps:
+	  1. Go to cart
+	  2. Click "Remove"
+	Expected Result: Product removed, cart total updated, stock restored.
+
+	TC005 - Checkout with Valid Details
+	Preconditions: Cart has items, user logged in
+	Steps:
+	  1. Go to cart
+	  2. Click "Checkout"
+	  3. Enter payment and shipping details
+	  4. Submit
+	Expected Result: Order confirmed, purchase recorded, stock updated.
+
+	TC006 - Checkout with Empty Cart
+	Preconditions: Cart empty
+	Steps:
+ 	 1. Navigate to checkout
+	Expected Result: System prevents checkout, error message displayed.
+
+Negative Test Cases
+
+
+	TC007 - Add Quantity Beyond Stock
+	Preconditions: Stock = 5
+	Steps:
+	  1. Add product to cart
+	  2. Enter quantity = 10
+ 	 3. Update
+	Expected Result: System prevents exceeding stock, error message shown.
+
+	TC008 - Checkout Without Login
+	Preconditions: Cart has items, user not logged in
+	Steps:
+	  1. Add product to cart
+	  2. Click "Checkout"
+	Expected Result: Redirected to login/registration page.
+
+	TC009 - Invalid Payment Details
+	Preconditions: Valid cart
+	Steps:
+ 	 1. Enter incorrect card number
+  	2. Submit payment
+	Expected Result: Payment fails, order not created, error displayed.
+
+	TC010 - Session Timeout During Checkout
+	Preconditions: User logged in, inactive for long period
+	Steps:
+ 	 1. Begin checkout
+ 	 2. Wait until session expires
+  	3. Submit
+	Expected Result: Redirected to login, cart preserved.
+
+Integration Test Cases
+
+
+	TC011 - Verify Stock Deduction After Purchase
+	Preconditions: Product stock = 20
+	Steps:
+ 	 1. Purchase product quantity 3
+	Expected Result: Stock reduced to 17 in database.
+
+	TC012 - Verify Transaction Logging
+	Preconditions: Transaction table available
+	Steps:
+ 	 1. Complete purchase
+	Expected Result: Transaction details stored (UserId, ProductId, Quantity, Price).
+
+	TC013 - User Homepage Purchase History
+	Preconditions: User has made prior purchases
+	Steps:
+	  1. Navigate to user homepage
+	Expected Result: Purchased products displayed with correct details.
+
+UI/UX Test Cases
+
+
+	TC014 - Display Product Image
+	Preconditions: Product has uploaded photo
+	Steps:
+ 	 1. Open product page
+	Expected Result: Product image displayed correctly.
+
+	TC015 - Cart Badge Update
+	Preconditions: Cart initially empty
+	Steps:
+ 	 1. Add product to cart
+	Expected Result: Cart badge increments in header navigation.
+
+	TC016 - Responsive Layout
+	Preconditions: Access on mobile device
+	Steps:
+	  1. Open product list
+ 	 2. Open cart
+	Expected Result: Layout adjusts properly, no broken elements.
+
+Test Case Design
+
+[TEST - Individual] Do a course on automation (one tool) and install the tool for future sprints 
+(API Testing, Test Automation)
+
+Completed course on Selenium Essential Training by Meaghan Lewis on LinkedIn learning
+
+https://www.linkedin.com/learning/certificates/17949488f3449e65d518ad0fcef3791d31574294d04d2946de8aca1a74386cb0?trk=share_certificate
+
+I also installed Selenium for optimal web testing.
+
+[TEST - Individual] Identity list of all tools - that could be used for testing i.e. jmeter, fiddler, postman, selenium etc - and write three lines abt that tool use case
+
+Functional & UI Testing Tools
+
+	Selenium
+
+		Open-source framework for automating web applications across browsers.
+
+		Provides support for multiple programming languages.
+
+		Commonly applied for regression, functional, cross-browser validation.
+
+	Cypress
+
+		JavaScript-based end-to-end testing framework.
+
+		Designed for real-time reloading with simplified debugging.
+
+		Applied primarily to modern front-end validation.
+
+	Playwright
+
+		Microsoft framework for cross-browser automation.
+
+		Supports JavaScript, Python, Java, C#.
+
+		Applied for UI and functional test coverage across platforms.
+
+	TestComplete
+
+		Commercial GUI automation platform for desktop, web, mobile.
+
+		Provides record-and-playback functionality with scripting capability.
+
+		Suitable for enterprise-scale regression and functional validation.
+
+API Testing Tools
+
+	Postman
+
+		Widely adopted tool for RESTful API request design.
+
+		Provides collections, automation features, environment handling.
+
+		Applied frequently for API validation within CI/CD pipelines.
+
+	SoapUI
+
+		Specialized framework for SOAP and REST API verification.
+
+		Provides data-driven testing capability with assertions.
+	
+		Applied for service-level functional and load validation.
+
+	Katalon Studio
+
+		Unified automation platform for API, web, mobile, desktop.
+
+		Provides low-code templates with keyword-driven execution.
+
+		Suitable for teams requiring multi-platform test coverage.
+
+Performance & Load Testing Tools
+
+	Apache JMeter
+
+		Open-source tool for load and stress validation.
+	
+		Capable of simulating multiple concurrent users.
+
+		Generates reports detailing latency, throughput, bottlenecks.
+
+	Gatling
+
+		Performance testing framework with Scala-based DSL.
+
+		Provides automated HTML-based reporting capability.
+
+		Applied in DevOps pipelines for continuous performance validation.
+
+	LoadRunner
+
+		Enterprise-grade platform for large-scale performance testing.
+
+		Capable of simulating thousands of concurrent users.
+
+		Provides detailed server health and application diagnostics.
+
+	Locust
+
+		Python-based load testing framework.
+
+		Provides distributed simulation of user behaviour.
+
+		Applied for flexible, scriptable performance scenarios.
+
+Security Testing Tools
+
+	OWASP ZAP
+
+		Free open-source tool for application penetration testing.
+
+		Provides automated scanning for vulnerabilities.
+
+		Commonly integrated into continuous delivery pipelines.
+
+	Burp Suite
+
+		Comprehensive toolkit for web application security.
+
+		Provides proxy, scanner, repeater functionality.
+
+		Widely adopted in penetration testing practices.
+
+	Fortify
+
+		Enterprise solution for static and dynamic analysis.
+
+		Provides automated vulnerability identification in source code.
+
+		Applied within secure development lifecycles.
+
+Mobile Testing Tools
+
+	Appium
+
+		Open-source framework for mobile automation.
+
+		Provides cross-platform coverage for Android, iOS.
+
+		Utilises WebDriver protocol with multi-language support.
+
+	Espresso (Android)
+
+		Google-native UI testing framework for Android.
+
+		Provides fast execution integrated within Android Studio.
+
+		Applied primarily for functional UI validation.
+		
+	XCUITest (iOS)
+
+		Apple-native UI testing framework for iOS.
+
+		Fully integrated within Xcode development environment.
+
+		Applied for functional test automation of iOS interfaces.
+
+Unit Testing Frameworks
+
+	JUnit
+
+		Java-based framework for unit test automation.
+
+		Provides annotations and structured test lifecycle.
+
+		Applied in test-driven development workflows.
+
+	NUnit
+
+		Unit testing framework for .NET development.
+
+		Provides attributes, assertions, parameterized test support.
+
+		Applied within Visual Studio and Azure environments.
+
+	PyTest
+
+		Python testing framework with plugin ecosystem.
+
+		Provides fixtures and parameterization features.
+
+		Applied for unit, functional, integration coverage.
+
+	Mocha/Chai
+
+		JavaScript testing framework with assertion library.
+
+		Provides support for asynchronous test scenarios.
+
+		Applied in Node.js and browser-based projects.
+
+Test Management & Reporting Tools
+
+	Jira + Zephyr
+
+		Jira extension for structured test management.
+
+		Provides traceability between user stories, tests, defects.
+
+		Applied in agile delivery workflows.
+
+	TestRail
+
+		Web-based test case management platform.
+
+		Provides structured execution tracking with reports.
+
+		Applied for integration with CI/CD and bug tracking.
+
+	qTest (Tricentis)
+
+		Enterprise-level test management platform.
+
+		Provides dashboards, traceability, workflow integration.
+
+		Suitable for scaled agile delivery contexts.
+
+	Allure Report
+
+		Open-source test reporting framework.
+
+		Provides interactive, visual reporting dashboards.
+
+		Applied widely with PyTest, JUnit, TestNG frameworks.
+
+Debugging & Monitoring Tools
+
+	Fiddler
+
+		Web debugging proxy for HTTP/HTTPS traffic inspection.
+
+		Provides request capture and manipulation features.
+
+		Applied for diagnosing API and browser communication issues.
+
+	Charles Proxy
+
+		Cross-platform debugging proxy for mobile, desktop traffic.
+
+		Provides network throttling and SSL inspection capability.
+
+		Applied in mobile application performance and debugging.
+
+	New Relic
+
+		Application performance monitoring platform.
+
+		Provides real-time metrics across applications and services.
+
+		Applied to monitor production health and reliability.
+
+	Dynatrace
+
+		AI-powered observability platform.
+
+		Provides full-stack insights across infrastructure, services.
+
+		Applied for automated detection of root cause issues.
+
+CI/CD & Automation Support
+
+	Jenkins
+
+		Open-source server for CI/CD pipeline automation.
+
+		Provides job execution for builds, tests, deployments.
+
+		Applied widely in automated software delivery workflows.
+
+	GitHub Actions
+
+		Workflow automation feature within GitHub platform.
+
+		Provides event-driven execution of build, test pipelines.
+
+		Applied frequently in open-source and small-scale teams.
+
+	Azure DevOps
+
+		Microsoft integrated suite for DevOps lifecycle.
+
+		Provides pipelines, boards, repos, test planning modules.
+
+		Applied in enterprise delivery environments.
