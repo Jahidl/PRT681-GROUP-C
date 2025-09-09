@@ -2,24 +2,36 @@
 Create a demo version of a simple, usable e-commerce website with the following capabilities: Users can browse products, add items to their cart, place orders, and view order status, the payment functionality will be provided as a basic simulation for testing only.
 
 2. Capabilities:
-In short, our system requires these core capabilities:
-    • User account management:
-          Registration
-          Login
-          Logout
-    • Product management:
-          Browse products
-          View details
-    • Shopping cart functionality:
-          Add products
-          Remove products
-    • Order management:
-          Submit orders
-          View order history
-    • Background management (optional, depending on time):
-          Add products
-          Remove products
-          Edit products
+Our product should have these core capabilities:
+ • User Accounts:
+  Registration
+  Login
+  Logout
+ • Products:
+ Browse Products
+ Product Category Display
+ View Details
+ Product List
+ Product Details
+ • Shopping Cart Functionality:
+ Add Product to Cart
+ Remove Product from Cart
+ 
+• Order Management: 
+ Submit Order
+ Generate Order
+ View Completed Order Details
+ • Backend Management:
+ Add Product
+ Remove Product
+ Edit Product
+ Change Order Status
+ Change Order Quantity
+
+Scope Exclusions:
+ No need to implement a full CMS; basic product quantity editing functionality is enough.
+ No need to implement a real payment process; payment functionality is only for testing payment success.
+
 
 
 2. business processes (define all three levels)
