@@ -1,2 +1,11 @@
-1.Project Scope and Capabilities
+1. Project Scope and Capabilities
 Create a demo version of a simple, usable e-commerce website with the following capabilities: Users can browse products, add items to their cart, place orders, and view order status, the payment functionality will be provided as a basic simulation for testing only.
+
+2. business processes (define all three levels)
+
+3. Personas, user stories, and requirements
+    U1: “Lily” (New Customer) — She is visiting our site for the first time. She wants our product menu to be clear and easy to find what she wants to buy quickly. She expects secure payment.
+    U2: “Sam” (Returning Customer) — He needs to view details of previous orders and repurchase items, expecting fast loading page.
+    U3: (Administrator) — Needs to initialize data, check stocks, add/remove products in the background, edit product quantities and information, etc.
+
+4. Identify Validation rules for user stories
