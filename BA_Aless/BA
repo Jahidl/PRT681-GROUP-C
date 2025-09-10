@@ -1,17 +1,4 @@
-We’ve decided to build a simple e-commerce website.
 
-At this stage we are only completing the core shopping flow:
-	•	User can register and log in logout
-	•	Browse products
-	•	Add items to cart
-	•	Place an order and check order
-
-No payment，no CMS，nly MVP functionality.
-
-
-
-1. Project Scope and Capabilities
-Create a demo version of a simple, usable e-commerce website with the following capabilities: Users can browse products, add items to their cart, place orders, and view order status, the payment functionality will be provided as a basic simulation for testing only.
 
 2. Capabilities:
 Our product should have these core capabilities:
