@@ -2,7 +2,7 @@
 This document shows how different BA tools and process diagrams support our e-commerce project. For example, we can use Jira to track user stories, Draw.io for our business process hierarchy, and Figma to show UI mockups. These tools make requirements visible and understandable for the whole team.
 ## 1. Common BA Tools
 
-- Requirements & Backlog Management
+- 1.1 Requirements & Backlog Management
   - Jira
 	- Use: Manage user stories, epics, sprints.
 	- Example: Our BA user stories (e.g., “Add to Cart”) can be tracked as Jira tickets with status (To Do / In Progress / Done).
@@ -25,3 +25,4 @@ This document shows how different BA tools and process diagrams support our e-co
   - Power BI / Tableau (advanced)
 	- Use: Visualize business data, dashboards.
 	- Example: Show order statistics, product popularity.
+## 2. Process Diagrams (Samples)
