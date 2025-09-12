@@ -1,0 +1,1 @@
+This document shows how different BA tools and process diagrams support our e-commerce project. For example, we can use Jira to track user stories, Draw.io for our business process hierarchy, and Figma to show UI mockups. These tools make requirements visible and understandable for the whole team.
