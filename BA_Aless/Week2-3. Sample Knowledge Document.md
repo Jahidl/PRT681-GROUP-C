@@ -26,19 +26,26 @@ This document shows how different BA tools and process diagrams support our e-co
 	- Use: Visualize business data, dashboards.
 	- Example: Show order statistics, product popularity.
 ## 2. Process Diagrams (Samples)
-2.1 High-Level Business Process Flow (E-commerce MVP)
-2.2 Swimlane Diagram (Simplified)
-2.3 Mockup Samples (Tools: Figma / Balsamiq)
-	•	Login Screen – Email + password fields + “Register” link.
-	•	Product Listing – Grid of product cards with name, price, stock, “Add to Cart” button.
-	•	Cart Page – List items, quantity field, “Checkout” button.
-	•	Order Confirmation – Order ID + summary of items.
+- 2.1 High-Level Business Process Flow (E-commerce MVP)
+![Uploading Screenshot 2025-09-12 at 5.09.22 pm.png…]()
+
+
+
+- 2.2 Swimlane Diagram (Simplified)
+
+
+
+- 2.3 Mockup Samples (Tools: Figma / Balsamiq)
+  - Login Screen – Email + password fields + “Register” link.
+  - Product Listing – Grid of product cards with name, price, stock, “Add to Cart” button.
+  - Cart Page – List items, quantity field, “Checkout” button.
+  - Order Confirmation – Order ID + summary of items.
 
  ## 3. Summary
-	•	Tools like Jira, Confluence, Lucidchart, and Figma help a BA manage requirements, diagrams, and documentation.
-	•	Process diagrams (flows, swimlanes, mockups) make requirements clear for developers and testers.
-	•	For our project, we should:
-	•	Track user stories in Jira (or Excel if Jira not available).
-	•	Document BA artifacts in Confluence (or shared folder).
-	•	Use Draw.io for process flows.
-	•	Use Figma for screen mockups.
+- Tools like Jira, Confluence, Lucidchart, and Figma help a BA manage requirements, diagrams, and documentation.
+- Process diagrams (flows, swimlanes, mockups) make requirements clear for developers and testers.
+- For our project, we should:
+  - Track user stories in Jira (or Excel if Jira not available).
+  - Document BA artifacts in Confluence (or shared folder).
+  - Use Draw.io for process flows.
+  - Use Figma for screen mockups.
