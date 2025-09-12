@@ -28,12 +28,11 @@
 # 2.Grooming Example
 We refine one user story:
 
-User Story: As a user, I want to add a product to my cart so that I can purchase it later.
-
-Priority: High (critical for MVP).
-Acceptance Criteria:
-Product must exist in catalog.
-Quantity must be ≥1 and ≤ stock.
-Cart total must update correctly.
-Dependencies: Product Discovery (user must be able to see product first).
-Effort: 3 story points (small feature, but involves backend + UI).
+- User Story: As a user, I want to add a product to my cart so that I can purchase it later.
+  - Priority: High (critical for MVP).
+  - Acceptance Criteria:
+    - Product must exist in catalog.
+    - Quantity must be ≥1 and ≤ stock.
+    - Cart total must update correctly.
+  - Dependencies: Product Discovery (user must be able to see product first).
+  - Effort: 3 story points (small feature, but involves backend + UI).
