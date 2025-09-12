@@ -28,7 +28,7 @@ This document shows how different BA tools and process diagrams support our e-co
 ## 2. Process Diagrams (Samples)
 - 2.1 High-Level Business Process Flow (E-commerce MVP)
 
-![](https://drive.google.com/file/d/1wUGT45YRhgTtpC0Z3f9Wdg04Ul1ir3Un/view?usp=sharing)
+![Business Process Flow](https://drive.google.com/drive/folders/1GwAz0RiuhmGL1F64Erb0RRQ_kD4Hytce)
 
 
 
