@@ -30,8 +30,6 @@ This document shows how different BA tools and process diagrams support our e-co
 
 ![Business Process Flow](images/BusinessProcessFlow.png)
 
-
-
 - 2.2 Swimlane Diagram (Simplified)
 
 
