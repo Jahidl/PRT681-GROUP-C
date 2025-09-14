@@ -1,0 +1,12 @@
+bin/
+obj/
+*.user
+*.suo
+*.cache
+*.pdb
+*.log
+*.db
+node_modules/
+.git
+.gitignore
+.DS_Store

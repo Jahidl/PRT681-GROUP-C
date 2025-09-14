@@ -1,0 +1,59 @@
+version: "3.9"
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: cdu_sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=${MSSQL_SA_PASSWORD:-Your_strong_password123}
+      - MSSQL_PID=Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - sql_data:/var/opt/mssql
+
+  api:
+    build:
+      context: ./api/ECommerce.Api
+      dockerfile: Dockerfile
+    container_name: cdu_api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=sportappDb;User Id=sa;Password=${MSSQL_SA_PASSWORD:-Your_strong_password123};TrustServerCertificate=True;Encrypt=True
+      - JWT__Issuer=${JWT_ISSUER:-cdu.local}
+      - JWT__Audience=${JWT_AUDIENCE:-cdu.local}
+      - JWT__Key=${JWT_KEY:-supersecret_dev_key_change}
+    depends_on:
+      - sqlserver
+    ports:
+      - "8080:8080"
+
+  sportapp:
+    build:
+      context: ./sportapp
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:8080}
+    container_name: cdu_sportapp
+    depends_on:
+      - api
+    ports:
+      - "5173:80"
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:8080}
+    container_name: cdu_web
+    depends_on:
+      - api
+    ports:
+      - "5174:80"
+
+volumes:
+  sql_data:
+    driver: local

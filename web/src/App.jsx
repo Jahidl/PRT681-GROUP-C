@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import Home from "./components/Home/Home.jsx";
+import Home from "./components/home/Home.jsx";
 import { PRODUCTS } from "./data/products.js";
 import "./App.css";
 

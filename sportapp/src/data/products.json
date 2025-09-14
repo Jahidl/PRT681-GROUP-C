@@ -1,0 +1,454 @@
+{
+  "categories": [
+    {
+      "id": "fitness",
+      "name": "Fitness Equipment",
+      "description": "Professional fitness equipment for home and gym use",
+      "image": "categories/fitness-category.jpg",
+      "subcategories": [
+        {
+          "id": "cardio",
+          "name": "Cardio Equipment",
+          "description": "Treadmills, bikes, and cardio machines"
+        },
+        {
+          "id": "strength",
+          "name": "Strength Training",
+          "description": "Weights, machines, and strength equipment"
+        },
+        {
+          "id": "accessories",
+          "name": "Fitness Accessories",
+          "description": "Mats, bands, and workout accessories"
+        }
+      ]
+    },
+    {
+      "id": "team-sports",
+      "name": "Team Sports",
+      "description": "Equipment for basketball, soccer, volleyball and more",
+      "image": "categories/team-sports-category.jpg",
+      "subcategories": [
+        {
+          "id": "basketball",
+          "name": "Basketball",
+          "description": "Balls, hoops, and basketball gear"
+        },
+        {
+          "id": "soccer",
+          "name": "Soccer",
+          "description": "Soccer balls, goals, and equipment"
+        },
+        {
+          "id": "volleyball",
+          "name": "Volleyball",
+          "description": "Volleyballs, nets, and court equipment"
+        }
+      ]
+    },
+    {
+      "id": "outdoor",
+      "name": "Outdoor Sports",
+      "description": "Gear for hiking, camping, cycling and outdoor adventures",
+      "image": "categories/outdoor-category.jpg",
+      "subcategories": [
+        {
+          "id": "cycling",
+          "name": "Cycling",
+          "description": "Bikes, helmets, and cycling accessories"
+        },
+        {
+          "id": "hiking",
+          "name": "Hiking & Camping",
+          "description": "Backpacks, tents, and outdoor gear"
+        }
+      ]
+    },
+    {
+      "id": "racquet",
+      "name": "Racquet Sports",
+      "description": "Tennis, badminton, squash equipment",
+      "image": "categories/racquet-category.jpg",
+      "subcategories": [
+        {
+          "id": "tennis",
+          "name": "Tennis",
+          "description": "Rackets, balls, and tennis accessories"
+        },
+        {
+          "id": "badminton",
+          "name": "Badminton",
+          "description": "Rackets, shuttlecocks, and nets"
+        }
+      ]
+    },
+    {
+      "id": "water-sports",
+      "name": "Water Sports",
+      "description": "Swimming, surfing, and water activity gear",
+      "image": "categories/water-sports-category.jpg",
+      "subcategories": [
+        {
+          "id": "swimming",
+          "name": "Swimming",
+          "description": "Swimwear, goggles, and pool equipment"
+        },
+        {
+          "id": "surfing",
+          "name": "Surfing",
+          "description": "Surfboards, wetsuits, and surf gear"
+        }
+      ]
+    }
+  ],
+  "products": [
+    {
+      "id": "basketball-pro-1",
+      "name": "Professional Basketball - Official Size",
+      "description": "Official size basketball with superior grip and durability. Perfect for indoor and outdoor play.",
+      "price": 29.99,
+      "originalPrice": 39.99,
+      "category": "team-sports",
+      "subcategory": "basketball",
+      "brand": "SportMaster",
+      "rating": 4.8,
+      "reviewCount": 245,
+      "inStock": true,
+      "stockCount": 150,
+      "images": [
+        "products/basketball-pro-1-main.jpg",
+        "products/basketball-pro-1-detail.jpg",
+        "products/basketball-pro-1-action.jpg"
+      ],
+      "features": [
+        "Official size and weight",
+        "Premium composite leather",
+        "Deep channel design",
+        "Indoor/outdoor use"
+      ],
+      "specifications": {
+        "size": "Official (29.5\")",
+        "material": "Composite leather",
+        "weight": "22 oz",
+        "color": "Orange"
+      },
+      "tags": ["bestseller", "featured"]
+    },
+    {
+      "id": "tennis-racket-carbon-1",
+      "name": "Carbon Fiber Tennis Racket - Pro Series",
+      "description": "Lightweight carbon fiber tennis racket designed for intermediate to advanced players.",
+      "price": 149.99,
+      "originalPrice": 199.99,
+      "category": "racquet",
+      "subcategory": "tennis",
+      "brand": "TennisElite",
+      "rating": 4.7,
+      "reviewCount": 128,
+      "inStock": true,
+      "stockCount": 45,
+      "images": [
+        "products/tennis-racket-carbon-1-main.jpg",
+        "products/tennis-racket-carbon-1-grip.jpg",
+        "products/tennis-racket-carbon-1-strings.jpg"
+      ],
+      "features": [
+        "100% carbon fiber frame",
+        "Pre-strung with premium strings",
+        "Comfortable grip",
+        "Lightweight design"
+      ],
+      "specifications": {
+        "weight": "10.6 oz",
+        "headSize": "100 sq in",
+        "stringPattern": "16x19",
+        "gripSize": "4 3/8\""
+      },
+      "tags": ["sale", "professional"]
+    },
+    {
+      "id": "running-shoes-pro-1",
+      "name": "Professional Running Shoes - Marathon Series",
+      "description": "High-performance running shoes with advanced cushioning and breathable mesh upper.",
+      "price": 129.99,
+      "originalPrice": 159.99,
+      "category": "footwear",
+      "subcategory": "running",
+      "brand": "RunFast",
+      "rating": 4.9,
+      "reviewCount": 567,
+      "inStock": true,
+      "stockCount": 89,
+      "images": [
+        "products/running-shoes-pro-1-main.jpg",
+        "products/running-shoes-pro-1-side.jpg",
+        "products/running-shoes-pro-1-sole.jpg"
+      ],
+      "features": [
+        "Advanced cushioning system",
+        "Breathable mesh upper",
+        "Lightweight construction",
+        "Durable rubber outsole"
+      ],
+      "specifications": {
+        "weight": "8.5 oz",
+        "drop": "10mm",
+        "material": "Mesh/Synthetic",
+        "sizes": "6-13 US"
+      },
+      "tags": ["bestseller", "new-arrival"],
+      "sizes": ["6", "6.5", "7", "7.5", "8", "8.5", "9", "9.5", "10", "10.5", "11", "11.5", "12", "12.5", "13"],
+      "colors": ["Black/White", "Blue/Silver", "Red/Black"]
+    },
+    {
+      "id": "yoga-mat-premium-1",
+      "name": "Premium Yoga Mat - Extra Thick",
+      "description": "Extra thick yoga mat with superior grip and cushioning for all yoga practices.",
+      "price": 39.99,
+      "originalPrice": 49.99,
+      "category": "fitness",
+      "subcategory": "accessories",
+      "brand": "ZenFit",
+      "rating": 4.6,
+      "reviewCount": 892,
+      "inStock": true,
+      "stockCount": 200,
+      "images": [
+        "products/yoga-mat-premium-1-main.jpg",
+        "products/yoga-mat-premium-1-rolled.jpg",
+        "products/yoga-mat-premium-1-texture.jpg"
+      ],
+      "features": [
+        "Extra thick 6mm cushioning",
+        "Non-slip surface",
+        "Eco-friendly materials",
+        "Easy to clean"
+      ],
+      "specifications": {
+        "thickness": "6mm",
+        "dimensions": "72\" x 24\"",
+        "material": "TPE",
+        "weight": "2.2 lbs"
+      },
+      "tags": ["eco-friendly", "bestseller"],
+      "colors": ["Purple", "Blue", "Green", "Pink", "Black"]
+    },
+    {
+      "id": "dumbbells-adjustable-1",
+      "name": "Adjustable Dumbbells Set - 5-50 lbs",
+      "description": "Space-saving adjustable dumbbells that replace 15 sets of weights.",
+      "price": 299.99,
+      "originalPrice": 399.99,
+      "category": "fitness",
+      "subcategory": "strength",
+      "brand": "PowerLift",
+      "rating": 4.8,
+      "reviewCount": 156,
+      "inStock": true,
+      "stockCount": 25,
+      "images": [
+        "products/dumbbells-adjustable-1-main.jpg",
+        "products/dumbbells-adjustable-1-weights.jpg",
+        "products/dumbbells-adjustable-1-stand.jpg"
+      ],
+      "features": [
+        "Adjustable 5-50 lbs per dumbbell",
+        "Quick weight selection",
+        "Compact design",
+        "Includes storage stand"
+      ],
+      "specifications": {
+        "weightRange": "5-50 lbs per dumbbell",
+        "increments": "5 lb increments",
+        "material": "Steel/Rubber",
+        "dimensions": "16.9\" x 8.3\" x 9\""
+      },
+      "tags": ["premium", "space-saver"]
+    },
+    {
+      "id": "soccer-ball-fifa-1",
+      "name": "FIFA Approved Soccer Ball - Match Quality",
+      "description": "Official FIFA approved soccer ball used in professional matches worldwide.",
+      "price": 34.99,
+      "originalPrice": 44.99,
+      "category": "team-sports",
+      "subcategory": "soccer",
+      "brand": "GlobalSport",
+      "rating": 4.7,
+      "reviewCount": 334,
+      "inStock": true,
+      "stockCount": 120,
+      "images": [
+        "products/soccer-ball-fifa-1-main.jpg",
+        "products/soccer-ball-fifa-1-detail.jpg",
+        "products/soccer-ball-fifa-1-field.jpg"
+      ],
+      "features": [
+        "FIFA approved",
+        "Professional match quality",
+        "Durable construction",
+        "Perfect weight and bounce"
+      ],
+      "specifications": {
+        "size": "Size 5",
+        "circumference": "68-70 cm",
+        "weight": "410-450g",
+        "material": "Synthetic leather"
+      },
+      "tags": ["fifa-approved", "professional"]
+    },
+    {
+      "id": "mountain-bike-trail-1",
+      "name": "Mountain Bike - Trail Master 27.5\"",
+      "description": "High-performance mountain bike designed for trail riding and off-road adventures.",
+      "price": 899.99,
+      "originalPrice": 1199.99,
+      "category": "outdoor",
+      "subcategory": "cycling",
+      "brand": "TrailRider",
+      "rating": 4.9,
+      "reviewCount": 89,
+      "inStock": true,
+      "stockCount": 12,
+      "images": [
+        "products/mountain-bike-trail-1-main.jpg",
+        "products/mountain-bike-trail-1-side.jpg",
+        "products/mountain-bike-trail-1-detail.jpg"
+      ],
+      "features": [
+        "27.5\" aluminum frame",
+        "21-speed Shimano drivetrain",
+        "Front suspension fork",
+        "Disc brakes front and rear"
+      ],
+      "specifications": {
+        "frameSize": "Medium (17\")",
+        "wheelSize": "27.5\"",
+        "gears": "21-speed",
+        "weight": "32 lbs"
+      },
+      "tags": ["premium", "adventure"],
+      "sizes": ["Small (15\")", "Medium (17\")", "Large (19\")", "X-Large (21\")"]
+    },
+    {
+      "id": "swimming-goggles-pro-1",
+      "name": "Professional Swimming Goggles - Anti-Fog",
+      "description": "Professional swimming goggles with anti-fog coating and UV protection.",
+      "price": 24.99,
+      "originalPrice": 34.99,
+      "category": "water-sports",
+      "subcategory": "swimming",
+      "brand": "AquaPro",
+      "rating": 4.5,
+      "reviewCount": 445,
+      "inStock": true,
+      "stockCount": 180,
+      "images": [
+        "products/swimming-goggles-pro-1-main.jpg",
+        "products/swimming-goggles-pro-1-side.jpg",
+        "products/swimming-goggles-pro-1-case.jpg"
+      ],
+      "features": [
+        "Anti-fog coating",
+        "UV protection",
+        "Comfortable silicone seal",
+        "Adjustable strap"
+      ],
+      "specifications": {
+        "lensType": "Polycarbonate",
+        "uvProtection": "100%",
+        "sealMaterial": "Silicone",
+        "strapType": "Adjustable silicone"
+      },
+      "tags": ["professional", "anti-fog"],
+      "colors": ["Clear", "Blue", "Black", "Smoke"]
+    },
+    {
+      "id": "volleyball-official-1",
+      "name": "Official Volleyball - Tournament Grade",
+      "description": "Official tournament grade volleyball with superior flight characteristics.",
+      "price": 27.99,
+      "originalPrice": 35.99,
+      "category": "team-sports",
+      "subcategory": "volleyball",
+      "brand": "VolleyMaster",
+      "rating": 4.6,
+      "reviewCount": 198,
+      "inStock": true,
+      "stockCount": 95,
+      "images": [
+        "products/volleyball-official-1-main.jpg",
+        "products/volleyball-official-1-detail.jpg",
+        "products/volleyball-official-1-court.jpg"
+      ],
+      "features": [
+        "Official tournament size",
+        "Superior flight control",
+        "Durable construction",
+        "Professional grade"
+      ],
+      "specifications": {
+        "circumference": "65-67 cm",
+        "weight": "260-280g",
+        "material": "Synthetic leather",
+        "panels": "18-panel design"
+      },
+      "tags": ["tournament-grade", "official"]
+    },
+    {
+      "id": "badminton-racket-carbon-1",
+      "name": "Carbon Badminton Racket - Speed Series",
+      "description": "Lightweight carbon badminton racket designed for speed and precision.",
+      "price": 89.99,
+      "originalPrice": 119.99,
+      "category": "racquet",
+      "subcategory": "badminton",
+      "brand": "ShuttleAce",
+      "rating": 4.7,
+      "reviewCount": 167,
+      "inStock": true,
+      "stockCount": 67,
+      "images": [
+        "products/badminton-racket-carbon-1-main.jpg",
+        "products/badminton-racket-carbon-1-grip.jpg",
+        "products/badminton-racket-carbon-1-strings.jpg"
+      ],
+      "features": [
+        "100% carbon fiber",
+        "Ultra-lightweight",
+        "High tension strings",
+        "Ergonomic grip"
+      ],
+      "specifications": {
+        "weight": "85g",
+        "balance": "Head light",
+        "stringTension": "24-26 lbs",
+        "gripSize": "G4"
+      },
+      "tags": ["lightweight", "precision"]
+    }
+  ],
+  "featuredProducts": [
+    "basketball-pro-1",
+    "running-shoes-pro-1",
+    "tennis-racket-carbon-1",
+    "yoga-mat-premium-1"
+  ],
+  "bestSellers": [
+    "running-shoes-pro-1",
+    "yoga-mat-premium-1",
+    "basketball-pro-1",
+    "soccer-ball-fifa-1"
+  ],
+  "newArrivals": [
+    "running-shoes-pro-1",
+    "mountain-bike-trail-1",
+    "dumbbells-adjustable-1"
+  ],
+  "saleProducts": [
+    "tennis-racket-carbon-1",
+    "mountain-bike-trail-1",
+    "swimming-goggles-pro-1",
+    "volleyball-official-1"
+  ]
+}
