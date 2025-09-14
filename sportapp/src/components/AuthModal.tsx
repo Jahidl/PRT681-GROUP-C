@@ -131,17 +131,6 @@ const AuthModal: React.FC = () => {
 
           {/* Content */}
           <div className="p-6">
-            {/* Demo Credentials Notice */}
-            {authMode === 'login' && (
-              <div className="mb-6 p-4 bg-orange-500/10 border border-orange-500/20 rounded-lg">
-                <h3 className="text-sm font-medium text-orange-400 mb-2">Demo Credentials</h3>
-                <p className="text-xs text-gray-300 mb-2">Use these credentials to test the login:</p>
-                <div className="text-xs text-gray-400 space-y-1">
-                  <div><strong>Email:</strong> demo@sportapp.com</div>
-                  <div><strong>Password:</strong> demo123</div>
-                </div>
-              </div>
-            )}
 
             {/* Error Message */}
             {error && (

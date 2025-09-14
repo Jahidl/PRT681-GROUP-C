@@ -174,96 +174,197 @@ const initialState: AuthState = {
   authMode: 'login'
 };
 
-// Mock API functions - In a real app, these would call your backend API
-const mockAuthAPI = {
+// API configuration - use environment variable or fallback to localhost for development
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
+
+// Real API functions
+const authAPI = {
   async login(email: string, password: string): Promise<User> {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Mock validation
-    if (email === 'demo@sportapp.com' && password === 'demo123') {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          emailAddress: email,
+          password: password
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Login failed: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      // Transform API response to User interface
       const user: User = {
-        id: '1',
-        email: 'demo@sportapp.com',
-        firstName: 'John',
-        lastName: 'Doe',
-        phone: '+1 (555) 123-4567',
-        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
-        addresses: [
-          {
-            id: '1',
-            type: 'billing',
-            firstName: 'John',
-            lastName: 'Doe',
-            addressLine1: '123 Main Street',
-            city: 'New York',
-            state: 'NY',
-            postalCode: '10001',
-            country: 'United States',
-            isDefault: true
-          }
-        ],
+        id: data.user.id,
+        email: data.user.emailAddress,
+        firstName: data.user.firstName,
+        lastName: data.user.lastName,
+        phone: data.user.phoneNumber || '',
+        addresses: [],
         preferences: {
-          newsletter: true,
+          newsletter: false,
           smsNotifications: false,
           emailNotifications: true,
           currency: 'USD',
           language: 'en',
           theme: 'auto'
         },
-        createdAt: new Date('2023-01-15'),
+        createdAt: new Date(),
         lastLoginAt: new Date()
       };
+
+      // Store JWT access token
+      if (data.accessToken) {
+        localStorage.setItem('sportapp-token', data.accessToken);
+      }
+
       return user;
-    } else {
-      throw new Error('Invalid email or password');
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Network error occurred during login');
     }
   },
 
   async register(userData: RegisterData): Promise<User> {
-    await new Promise(resolve => setTimeout(resolve, 1200));
-    
-    // Mock user creation
-    const user: User = {
-      id: Date.now().toString(),
-      email: userData.email,
-      firstName: userData.firstName,
-      lastName: userData.lastName,
-      phone: userData.phone,
-      addresses: [],
-      preferences: {
-        newsletter: userData.newsletter || false,
-        smsNotifications: false,
-        emailNotifications: true,
-        currency: 'USD',
-        language: 'en',
-        theme: 'auto'
-      },
-      createdAt: new Date(),
-      lastLoginAt: new Date()
-    };
-    return user;
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          phoneNumber: userData.phone || '',
+          emailAddress: userData.email,
+          password: userData.password,
+          confirmPassword: userData.password // Using same password for confirmPassword
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Registration failed: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      // Transform API response to User interface
+      const user: User = {
+        id: data.id || data.userId || Date.now().toString(),
+        email: data.emailAddress || data.email,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        phone: data.phoneNumber || data.phone,
+        addresses: data.addresses || [],
+        preferences: {
+          newsletter: userData.newsletter || false,
+          smsNotifications: false,
+          emailNotifications: true,
+          currency: 'USD',
+          language: 'en',
+          theme: 'auto'
+        },
+        createdAt: data.createdAt ? new Date(data.createdAt) : new Date(),
+        lastLoginAt: new Date()
+      };
+
+      // Store JWT token if provided
+      if (data.token) {
+        localStorage.setItem('sportapp-token', data.token);
+      }
+
+      return user;
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Network error occurred during registration');
+    }
   },
 
   async updateUser(_userId: string, userData: Partial<User>): Promise<User> {
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    // In a real app, this would update the user in the database
-    const currentUser = JSON.parse(localStorage.getItem('sportapp-user') || '{}');
-    const updatedUser = { ...currentUser, ...userData };
-    return updatedUser;
+    try {
+      const token = localStorage.getItem('sportapp-token');
+      const response = await fetch(`${API_BASE_URL}/user/update`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
+        },
+        body: JSON.stringify(userData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Update failed: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Network error occurred during update');
+    }
   },
 
   async forgotPassword(email: string): Promise<void> {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    // Mock password reset email
-    console.log(`Password reset email sent to ${email}`);
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          emailAddress: email
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Password reset failed: ${response.status} ${response.statusText}`);
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Network error occurred during password reset');
+    }
   },
 
-  async resetPassword(_token: string, _password: string): Promise<void> {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    // Mock password reset
-    console.log(`Password reset for token ${_token}`);
+  async resetPassword(token: string, password: string): Promise<void> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/reset-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          token: token,
+          password: password
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Password reset failed: ${response.status} ${response.statusText}`);
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Network error occurred during password reset');
+    }
   }
 };
 
@@ -299,7 +400,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     dispatch({ type: 'AUTH_START' });
     try {
-      const user = await mockAuthAPI.login(email, password);
+      const user = await authAPI.login(email, password);
       dispatch({ type: 'AUTH_SUCCESS', payload: user });
     } catch (error) {
       dispatch({ type: 'AUTH_FAILURE', payload: error instanceof Error ? error.message : 'Login failed' });
@@ -309,7 +410,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (userData: RegisterData) => {
     dispatch({ type: 'AUTH_START' });
     try {
-      const user = await mockAuthAPI.register(userData);
+      const user = await authAPI.register(userData);
       dispatch({ type: 'AUTH_SUCCESS', payload: user });
     } catch (error) {
       dispatch({ type: 'AUTH_FAILURE', payload: error instanceof Error ? error.message : 'Registration failed' });
@@ -317,6 +418,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = () => {
+    // Clear stored token
+    localStorage.removeItem('sportapp-token');
     dispatch({ type: 'LOGOUT' });
   };
 
@@ -325,7 +428,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     dispatch({ type: 'AUTH_START' });
     try {
-      const updatedUser = await mockAuthAPI.updateUser(state.user.id, userData);
+      const updatedUser = await authAPI.updateUser(state.user.id, userData);
       dispatch({ type: 'UPDATE_USER', payload: updatedUser });
     } catch (error) {
       dispatch({ type: 'AUTH_FAILURE', payload: error instanceof Error ? error.message : 'Update failed' });
@@ -335,7 +438,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const forgotPassword = async (email: string) => {
     dispatch({ type: 'AUTH_START' });
     try {
-      await mockAuthAPI.forgotPassword(email);
+      await authAPI.forgotPassword(email);
       // You might want to show a success message here
     } catch (error) {
       dispatch({ type: 'AUTH_FAILURE', payload: error instanceof Error ? error.message : 'Password reset failed' });
@@ -345,7 +448,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const resetPassword = async (token: string, password: string) => {
     dispatch({ type: 'AUTH_START' });
     try {
-      await mockAuthAPI.resetPassword(token, password);
+      await authAPI.resetPassword(token, password);
       // Redirect to login or auto-login
     } catch (error) {
       dispatch({ type: 'AUTH_FAILURE', payload: error instanceof Error ? error.message : 'Password reset failed' });

@@ -12,6 +12,18 @@ builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// CORS for local frontends
+const string DevCorsPolicy = "DevCors";
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(DevCorsPolicy, policy =>
+    {
+        policy.WithOrigins("http://localhost:5173", "http://localhost:5174")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 // Configure EF Core SQL Server
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? builder.Configuration["ConnectionStrings:DefaultConnection"]
@@ -40,6 +52,9 @@ if (app.Environment.IsDevelopment())
 // Enable Swagger middleware and UI
 app.UseSwagger();
 app.UseSwaggerUI();
+
+// Apply CORS before endpoints
+app.UseCors(DevCorsPolicy);
 
 // Redirect root to Swagger UI for a friendly landing page
 app.MapGet("/", () => Results.Redirect("/swagger"));
