@@ -4,6 +4,10 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+// Add Swagger generation for UI
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -12,7 +16,12 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.UseHttpsRedirection();
+// Enable Swagger middleware and UI
+app.UseSwagger();
+app.UseSwaggerUI();
+
+// Redirect root to Swagger UI for a friendly landing page
+app.MapGet("/", () => Results.Redirect("/swagger"));
 
 var summaries = new[]
 {
