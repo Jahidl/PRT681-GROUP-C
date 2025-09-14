@@ -365,6 +365,28 @@ const authAPI = {
       }
       throw new Error('Network error occurred during password reset');
     }
+  },
+
+  async logout(): Promise<void> {
+    try {
+      const token = localStorage.getItem('sportapp-token');
+      const response = await fetch(`${API_BASE_URL}/auth/logout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
+        }
+      });
+
+      // Note: We don't throw an error if logout fails on the server
+      // because we still want to clear local storage and log out the user
+      if (!response.ok) {
+        console.warn('Server logout failed, but continuing with local logout');
+      }
+    } catch (error) {
+      // Log the error but don't throw it - we still want to clear local data
+      console.warn('Network error during logout, continuing with local logout:', error);
+    }
   }
 };
 
@@ -417,10 +439,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const logout = () => {
-    // Clear stored token
-    localStorage.removeItem('sportapp-token');
-    dispatch({ type: 'LOGOUT' });
+  const logout = async () => {
+    try {
+      // Call the logout API endpoint
+      await authAPI.logout();
+    } catch (error) {
+      // Log error but continue with logout
+      console.error('Logout API call failed:', error);
+    } finally {
+      // Always clear local storage and update state
+      localStorage.removeItem('sportapp-token');
+      dispatch({ type: 'LOGOUT' });
+    }
   };
 
   const updateUser = async (userData: Partial<User>) => {

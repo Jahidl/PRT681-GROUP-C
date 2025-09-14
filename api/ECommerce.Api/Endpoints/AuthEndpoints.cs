@@ -102,6 +102,11 @@ namespace ECommerce.Api.Endpoints
             .WithName("Login")
             .WithOpenApi();
 
+            // Stateless JWT logout: clients should delete their token
+            group.MapPost("/logout", () => Results.Ok(new { message = "Logged out" }))
+                 .WithName("Logout")
+                 .WithOpenApi();
+
             return routes;
         }
 
