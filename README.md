@@ -24,3 +24,15 @@ npm i -D tailwindcss postcss autoprefixer && npx tailwindcss init -p
 
 How to run :
 npm run dev (make sure you are in the right directory)
+
+
+Run:
+
+Ensure you have docker desktop install on your computer
+docker compose up -d --build
+Open:
+sportapp: http://localhost:5173
+web: http://localhost:5174
+API: http://localhost:8080
+
+
