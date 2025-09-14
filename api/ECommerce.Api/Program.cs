@@ -1,3 +1,7 @@
+using ECommerce.Api.Data;
+using ECommerce.Api.Endpoints;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -8,7 +12,24 @@ builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Configure EF Core SQL Server
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? builder.Configuration["ConnectionStrings:DefaultConnection"]
+    ?? "Server=localhost;Database=SportStoreDb;Trusted_Connection=False;MultipleActiveResultSets=true;TrustServerCertificate=True;Encrypt=True;User Id=sa;Password=Your_strong_password123";
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+{
+    options.UseSqlServer(connectionString);
+});
+
 var app = builder.Build();
+
+// Ensure database created / migrated
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await db.Database.EnsureCreatedAsync();
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -22,6 +43,9 @@ app.UseSwaggerUI();
 
 // Redirect root to Swagger UI for a friendly landing page
 app.MapGet("/", () => Results.Redirect("/swagger"));
+
+// Auth endpoints
+app.MapAuthEndpoints();
 
 var summaries = new[]
 {
