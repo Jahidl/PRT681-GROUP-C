@@ -1,4 +1,4 @@
-# Applied to Our E-commerce Project
+# Applied to Our E-commerce Project – Used Tools Trading Website
 https://www.youtube.com/playlist?list=PL4xOJkqXupStbqGe7IGEf6jn6lnZ7RnN1
 
 We applied BABOK concepts directly to our project. We planned the scope and stakeholders, elicited requirements through team discussion, managed user stories in the lifecycle, modeled processes and mockups, and will evaluate the solution against user needs. This makes sure our e-commerce MVP is not only working technically, but also aligned to business analysis best practices.
