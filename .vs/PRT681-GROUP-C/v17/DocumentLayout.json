@@ -1,0 +1,49 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\tai7h\\source\\repos\\PRT681-GROUP-C\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{C5599590-5495-6FBD-F8E4-F97FB5C84BEF}|api\\ECommerce.Api\\ECommerce.Api.csproj|c:\\users\\tai7h\\source\\repos\\prt681-group-c\\api\\ecommerce.api\\ecommerce.api.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{C5599590-5495-6FBD-F8E4-F97FB5C84BEF}|api\\ECommerce.Api\\ECommerce.Api.csproj|solutionrelative:api\\ecommerce.api\\ecommerce.api.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 2,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{3ae79031-e1bc-11d0-8f78-00a0c9110057}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{1c64b9c2-e352-428e-a56d-0ace190b99a6}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "ECommerce.Api",
+              "DocumentMoniker": "C:\\Users\\tai7h\\Source\\Repos\\PRT681-GROUP-C\\api\\ECommerce.Api\\ECommerce.Api.csproj",
+              "RelativeDocumentMoniker": "api\\ECommerce.Api\\ECommerce.Api.csproj",
+              "ToolTip": "C:\\Users\\tai7h\\Source\\Repos\\PRT681-GROUP-C\\api\\ECommerce.Api\\ECommerce.Api.csproj",
+              "RelativeToolTip": "api\\ECommerce.Api\\ECommerce.Api.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2025-09-16T08:16:58.87Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{cce594b6-0c39-4442-ba28-10c64ac7e89f}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

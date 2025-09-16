@@ -1,25 +1,31 @@
 {
   "format": 1,
   "restore": {
-    "/Users/jahid/Desktop/PRT-681/PRT681-GROUP-C/api/ECommerce.Api/ECommerce.Api.csproj": {}
+    "C:\\Users\\tai7h\\Source\\Repos\\PRT681-GROUP-C\\api\\ECommerce.Api\\ECommerce.Api.csproj": {}
   },
   "projects": {
-    "/Users/jahid/Desktop/PRT-681/PRT681-GROUP-C/api/ECommerce.Api/ECommerce.Api.csproj": {
+    "C:\\Users\\tai7h\\Source\\Repos\\PRT681-GROUP-C\\api\\ECommerce.Api\\ECommerce.Api.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/jahid/Desktop/PRT-681/PRT681-GROUP-C/api/ECommerce.Api/ECommerce.Api.csproj",
+        "projectUniqueName": "C:\\Users\\tai7h\\Source\\Repos\\PRT681-GROUP-C\\api\\ECommerce.Api\\ECommerce.Api.csproj",
         "projectName": "ECommerce.Api",
-        "projectPath": "/Users/jahid/Desktop/PRT-681/PRT681-GROUP-C/api/ECommerce.Api/ECommerce.Api.csproj",
-        "packagesPath": "/Users/jahid/.nuget/packages/",
-        "outputPath": "/Users/jahid/Desktop/PRT-681/PRT681-GROUP-C/api/ECommerce.Api/obj/",
+        "projectPath": "C:\\Users\\tai7h\\Source\\Repos\\PRT681-GROUP-C\\api\\ECommerce.Api\\ECommerce.Api.csproj",
+        "packagesPath": "C:\\Users\\tai7h\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\tai7h\\Source\\Repos\\PRT681-GROUP-C\\api\\ECommerce.Api\\obj\\",
         "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
         "configFilePaths": [
-          "/Users/jahid/.nuget/NuGet/NuGet.Config"
+          "C:\\Users\\tai7h\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
           "net9.0"
         ],
         "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -36,9 +42,9 @@
         "restoreAuditProperties": {
           "enableAudit": "true",
           "auditLevel": "low",
-          "auditMode": "direct"
+          "auditMode": "all"
         },
-        "SdkAnalysisLevel": "9.0.300"
+        "SdkAnalysisLevel": "9.0.100"
       },
       "frameworks": {
         "net9.0": {
@@ -94,7 +100,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/9.0.303/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.100/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
