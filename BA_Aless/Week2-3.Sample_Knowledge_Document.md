@@ -32,7 +32,7 @@ This document shows how different BA tools and process diagrams support our e-co
 
 - 2.2 Swimlane Diagram (Simplified)
 
-![Swimlane Diagram Flow] (images/Swimlane_Diagram.png)
+![Swimlane Diagram Flow](images/Swimlane_Diagram.png)
 
 - 2.3 Mockup Samples (Tools: Figma / Balsamiq)
   - Login Screen – Email + password fields + “Register” link.
