@@ -9,7 +9,9 @@ import {
   Filter,
   Edit,
   Trash2,
-  Eye
+  Eye,
+  Menu,
+  X
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { productService } from '../../services/productService';
@@ -23,6 +25,7 @@ const AdminDashboard: React.FC = () => {
   const [currentView, setCurrentView] = useState<AdminView>('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const products = productService.getAllProducts();
   const categories = productService.getCategories();
@@ -45,71 +48,87 @@ const AdminDashboard: React.FC = () => {
   });
 
   const renderSidebar = () => (
-    <div className="w-64 bg-gray-900 border-r border-gray-800 min-h-screen">
-      <div className="p-6">
-        <h2 className="text-xl font-bold text-white mb-8">
-          Admin <span className="text-orange-500">Dashboard</span>
-        </h2>
+    <div className={`${sidebarCollapsed ? 'w-16' : 'w-64'} bg-gray-900 border-r border-gray-800 min-h-screen transition-all duration-300`}>
+      <div className={`${sidebarCollapsed ? 'p-4' : 'p-6'}`}>
+        <div className="flex items-center justify-between mb-8">
+          {!sidebarCollapsed && (
+            <h2 className="text-xl font-bold text-white">
+              Admin <span className="text-orange-500">Dashboard</span>
+            </h2>
+          )}
+          <button
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className="text-gray-400 hover:text-white transition-colors p-1 rounded hover:bg-gray-800"
+            title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {sidebarCollapsed ? <Menu className="h-5 w-5" /> : <X className="h-5 w-5" />}
+          </button>
+        </div>
         
         <nav className="space-y-2">
           <button
             onClick={() => setCurrentView('dashboard')}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors ${
+            className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center px-2' : 'space-x-3 px-4'} py-3 rounded-lg text-left transition-colors ${
               currentView === 'dashboard' 
                 ? 'bg-orange-500 text-white' 
                 : 'text-gray-300 hover:text-white hover:bg-gray-800'
             }`}
+            title={sidebarCollapsed ? 'Dashboard' : ''}
           >
             <TrendingUp className="h-5 w-5" />
-            <span>Dashboard</span>
+            {!sidebarCollapsed && <span>Dashboard</span>}
           </button>
           
           <button
             onClick={() => setCurrentView('products')}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors ${
+            className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center px-2' : 'space-x-3 px-4'} py-3 rounded-lg text-left transition-colors ${
               currentView === 'products' 
                 ? 'bg-orange-500 text-white' 
                 : 'text-gray-300 hover:text-white hover:bg-gray-800'
             }`}
+            title={sidebarCollapsed ? 'Products' : ''}
           >
             <Package className="h-5 w-5" />
-            <span>Products</span>
+            {!sidebarCollapsed && <span>Products</span>}
           </button>
           
           <button
             onClick={() => setCurrentView('categories')}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors ${
+            className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center px-2' : 'space-x-3 px-4'} py-3 rounded-lg text-left transition-colors ${
               currentView === 'categories' 
                 ? 'bg-orange-500 text-white' 
                 : 'text-gray-300 hover:text-white hover:bg-gray-800'
             }`}
+            title={sidebarCollapsed ? 'Categories' : ''}
           >
             <Filter className="h-5 w-5" />
-            <span>Categories</span>
+            {!sidebarCollapsed && <span>Categories</span>}
           </button>
           
           <button
             onClick={() => setCurrentView('users')}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors ${
+            className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center px-2' : 'space-x-3 px-4'} py-3 rounded-lg text-left transition-colors ${
               currentView === 'users' 
                 ? 'bg-orange-500 text-white' 
                 : 'text-gray-300 hover:text-white hover:bg-gray-800'
             }`}
+            title={sidebarCollapsed ? 'Users' : ''}
           >
             <Users className="h-5 w-5" />
-            <span>Users</span>
+            {!sidebarCollapsed && <span>Users</span>}
           </button>
           
           <button
             onClick={() => setCurrentView('orders')}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors ${
+            className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center px-2' : 'space-x-3 px-4'} py-3 rounded-lg text-left transition-colors ${
               currentView === 'orders' 
                 ? 'bg-orange-500 text-white' 
                 : 'text-gray-300 hover:text-white hover:bg-gray-800'
             }`}
+            title={sidebarCollapsed ? 'Orders' : ''}
           >
             <ShoppingCart className="h-5 w-5" />
-            <span>Orders</span>
+            {!sidebarCollapsed && <span>Orders</span>}
           </button>
         </nav>
       </div>
