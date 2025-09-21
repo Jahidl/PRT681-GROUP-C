@@ -1,6 +1,8 @@
 using ECommerce.Api.Data;
 using ECommerce.Api.Endpoints;
 using Microsoft.EntityFrameworkCore;
+using FluentMigrator.Runner;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,20 +29,60 @@ builder.Services.AddCors(options =>
 // Configure EF Core SQL Server
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? builder.Configuration["ConnectionStrings:DefaultConnection"]
-    ?? "Server=localhost;Database=SportStoreDb;Trusted_Connection=False;MultipleActiveResultSets=true;TrustServerCertificate=True;Encrypt=True;User Id=sa;Password=Your_strong_password123";
+    ?? Environment.GetEnvironmentVariable("CONNECTION_STRING")
+    ?? "Server=host.docker.internal,1433;Database=SportStoreDb;Trusted_Connection=False;MultipleActiveResultSets=true;TrustServerCertificate=True;Encrypt=True;User Id=sa;Password=Your_strong_password123";
 
-builder.Services.AddDbContext<AppDbContext>(options =>
+// Only add SQL Server DbContext and FluentMigrator if not in testing environment
+if (!builder.Environment.IsEnvironment("Testing"))
 {
-    options.UseSqlServer(connectionString);
-});
+    builder.Services.AddDbContext<AppDbContext>(options =>
+    {
+        options.UseSqlServer(connectionString);
+    });
+
+    // Add FluentMigrator services
+    builder.Services
+        .AddFluentMigratorCore()
+        .ConfigureRunner(rb => rb
+            .AddSqlServer()
+            .WithGlobalConnectionString(connectionString)
+            .ScanIn(Assembly.GetExecutingAssembly()).For.Migrations())
+        .AddLogging(lb => lb.AddFluentMigratorConsole());
+}
 
 var app = builder.Build();
 
-// Ensure database created / migrated
-using (var scope = app.Services.CreateScope())
+// Run FluentMigrator migrations (skip in testing environment)
+if (!app.Environment.IsEnvironment("Testing"))
 {
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await db.Database.EnsureCreatedAsync();
+    using (var scope = app.Services.CreateScope())
+    {
+        try
+        {
+            var runner = scope.ServiceProvider.GetRequiredService<IMigrationRunner>();
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+            
+            logger.LogInformation("Starting database migrations...");
+            
+            // Run migrations
+            runner.MigrateUp();
+            
+            logger.LogInformation("Database migrations completed successfully.");
+        }
+        catch (Exception ex)
+        {
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+            logger.LogError(ex, "An error occurred while running database migrations.");
+            
+            // Don't fail the application startup for migration errors in development
+            if (!app.Environment.IsDevelopment())
+            {
+                throw;
+            }
+            
+            logger.LogWarning("Continuing application startup despite migration errors (Development mode).");
+        }
+    }
 }
 
 // Configure the HTTP request pipeline.
@@ -61,6 +103,9 @@ app.MapGet("/", () => Results.Redirect("/swagger"));
 
 // Auth endpoints
 app.MapAuthEndpoints();
+
+// Category endpoints
+app.MapCategoryEndpoints();
 
 var summaries = new[]
 {
@@ -87,3 +132,6 @@ record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
 {
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 }
+
+// Make Program class accessible to test project
+public partial class Program { }

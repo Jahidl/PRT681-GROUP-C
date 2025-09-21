@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: ecommerce-sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=Your_strong_password123
+      - MSSQL_PID=Express
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    networks:
+      - ecommerce-network
+
+  ecommerce-api:
+    build:
+      context: ./ECommerce.Api
+      dockerfile: Dockerfile
+    container_name: ecommerce-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - CONNECTION_STRING=Server=sqlserver,1433;Database=SportStoreDb;Trusted_Connection=False;MultipleActiveResultSets=true;TrustServerCertificate=True;Encrypt=True;User Id=sa;Password=Your_strong_password123
+    ports:
+      - "8080:8080"
+    depends_on:
+      - sqlserver
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+
+volumes:
+  sqlserver_data:
+
+networks:
+  ecommerce-network:
+    driver: bridge

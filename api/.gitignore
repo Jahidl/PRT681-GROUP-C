@@ -1,0 +1,57 @@
+# Build artifacts
+[Bb]in/
+[Oo]bj/
+bin/
+obj/
+
+# Visual Studio files
+.vs/
+*.suo
+*.user
+*.ncb
+*.aps
+*.pdb
+*.obj
+*.exe
+*.dll
+*.lib
+*.exp
+*.ilk
+*.log
+*.bak
+*.scc
+*.vssscc
+*.vspscc
+*.vsscc
+*.vsw
+*.code-workspace
+*.sln.docstates
+
+# NuGet packages
+packages/
+*.nupkg
+*.snupkg
+
+# Temporary files
+*.tmp
+*.log
+*.cache
+*.userprefs
+*.pidb
+
+# Resharper files
+*.resharper
+*.DotSettings
+_ReSharper.*/
+
+# Rider files
+.idea/
+
+# DotNet tools
+.config/dotnet-tools.json
+
+# Test results
+TestResults/
+
+# Azure artifacts
+AzureArtifacts/

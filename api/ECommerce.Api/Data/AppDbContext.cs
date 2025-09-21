@@ -10,19 +10,14 @@ namespace ECommerce.Api.Data
         }
 
         public DbSet<User> Users => Set<User>();
+        public DbSet<Category> Categories => Set<Category>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-
-            modelBuilder.Entity<User>(entity =>
-            {
-                entity.HasIndex(u => u.EmailAddress).IsUnique();
-                entity.Property(u => u.FirstName).HasMaxLength(100).IsRequired();
-                entity.Property(u => u.LastName).HasMaxLength(100).IsRequired();
-                entity.Property(u => u.EmailAddress).HasMaxLength(256).IsRequired();
-                entity.Property(u => u.PhoneNumber).HasMaxLength(30);
-            });
+            
+            // Schema is managed by FluentMigrator
+            // EF Core is used only for data access
         }
     }
 }
