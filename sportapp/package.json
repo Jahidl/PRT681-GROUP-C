@@ -12,6 +12,17 @@
     "test:ui": "vitest --environment jsdom --setupFiles ./vitest.setup.ts"
   },
   "dependencies": {
+    "@progress/kendo-react-buttons": "^12.0.2",
+    "@progress/kendo-react-data-tools": "^12.0.2",
+    "@progress/kendo-react-dateinputs": "^12.0.2",
+    "@progress/kendo-react-dropdowns": "^12.0.2",
+    "@progress/kendo-react-form": "^12.0.2",
+    "@progress/kendo-react-grid": "^12.0.2",
+    "@progress/kendo-react-inputs": "^12.0.2",
+    "@progress/kendo-react-layout": "^12.0.2",
+    "@progress/kendo-react-notification": "^12.0.2",
+    "@progress/kendo-theme-default": "^12.0.1",
+    "@progress/kendo-ui": "^2025.3.825",
     "@radix-ui/react-slot": "^1.2.3",
     "@tailwindcss/vite": "^4.1.13",
     "class-variance-authority": "^0.7.1",
@@ -25,22 +36,22 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",
-    "@types/react": "^19.1.10",
-    "@types/react-dom": "^19.1.7",
-    "@vitejs/plugin-react-swc": "^4.0.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.0.1",
     "@testing-library/user-event": "^14.5.2",
+    "@types/react": "^19.1.10",
+    "@types/react-dom": "^19.1.7",
+    "@vitejs/plugin-react-swc": "^4.0.0",
     "daisyui": "^5.1.8",
     "eslint": "^9.33.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^16.3.0",
-    "tw-animate-css": "^1.3.8",
     "jsdom": "^25.0.1",
+    "tw-animate-css": "^1.3.8",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.39.1",
-    "vitest": "^2.1.3",
-    "vite": "^7.1.2"
+    "vite": "^7.1.2",
+    "vitest": "^2.1.3"
   }
 }

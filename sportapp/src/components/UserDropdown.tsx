@@ -1,13 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { User, Settings, ShoppingBag, Heart, LogOut, CreditCard, MapPin } from 'lucide-react';
+import { User, Settings, ShoppingBag, Heart, LogOut, CreditCard, MapPin, Shield } from 'lucide-react';
 import { Button } from './ui/button';
 import { useAuth } from '../contexts/AuthContext';
 
 interface UserDropdownProps {
   className?: string;
+  onAdminClick?: () => void;
 }
 
-const UserDropdown: React.FC<UserDropdownProps> = ({ className = '' }) => {
+const UserDropdown: React.FC<UserDropdownProps> = ({ className = '', onAdminClick }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -54,6 +55,14 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ className = '' }) => {
   }
 
   const displayName = `${user.firstName} ${user.lastName}`;
+  const isAdmin = user?.email?.includes('admin');
+  
+  // Debug logging to help troubleshoot
+  console.log('UserDropdown Debug:', {
+    userEmail: user?.email,
+    isAdmin: isAdmin,
+    emailContainsAdmin: user?.email?.includes('admin')
+  });
 
   return (
     <div
@@ -108,6 +117,18 @@ const UserDropdown: React.FC<UserDropdownProps> = ({ className = '' }) => {
                 <span>{item.label}</span>
               </a>
             ))}
+            
+            {/* Admin Dashboard Link - Temporarily visible for all users for testing */}
+            <button
+              onClick={() => {
+                setIsOpen(false);
+                onAdminClick?.();
+              }}
+              className="flex items-center space-x-3 w-full px-4 py-2 text-sm text-orange-400 hover:text-orange-300 hover:bg-gray-800 transition-colors"
+            >
+              <Shield className="h-4 w-4" />
+              <span>Admin Dashboard {isAdmin ? '(Admin)' : '(Demo)'}</span>
+            </button>
           </div>
 
           {/* Logout */}

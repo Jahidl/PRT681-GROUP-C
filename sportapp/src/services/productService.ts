@@ -158,6 +158,117 @@ class ProductService {
     const results = this.searchProducts(query);
     return results.slice(0, limit);
   }
+
+  // Get subcategories for a category
+  getSubcategories(
+    categoryId: string
+  ): { id: string; name: string; description: string }[] {
+    const category = this.getCategoryById(categoryId);
+    return category?.subcategories || [];
+  }
+
+  // Add new product (in-memory only - for demo purposes)
+  addProduct(product: Product): Product {
+    // Check if product ID already exists
+    if (this.getProductById(product.id)) {
+      throw new Error(`Product with ID '${product.id}' already exists`);
+    }
+
+    // Validate required fields
+    if (!product.id || !product.name || !product.category) {
+      throw new Error("Product ID, name, and category are required");
+    }
+
+    // Add to products array
+    this.data.products.push(product);
+
+    return product;
+  }
+
+  // Add new category (in-memory only - for demo purposes)
+  addCategory(category: Category): Category {
+    // Check if category ID already exists
+    if (this.getCategoryById(category.id)) {
+      throw new Error(`Category with ID '${category.id}' already exists`);
+    }
+
+    // Validate required fields
+    if (!category.id || !category.name) {
+      throw new Error("Category ID and name are required");
+    }
+
+    // Add to categories array
+    this.data.categories.push(category);
+
+    return category;
+  }
+
+  // Update product (in-memory only - for demo purposes)
+  updateProduct(productId: string, updates: Partial<Product>): Product {
+    const productIndex = this.data.products.findIndex(
+      (p) => p.id === productId
+    );
+    if (productIndex === -1) {
+      throw new Error(`Product with ID '${productId}' not found`);
+    }
+
+    // Update the product
+    this.data.products[productIndex] = {
+      ...this.data.products[productIndex],
+      ...updates,
+    };
+
+    return this.data.products[productIndex];
+  }
+
+  // Delete product (in-memory only - for demo purposes)
+  deleteProduct(productId: string): boolean {
+    const productIndex = this.data.products.findIndex(
+      (p) => p.id === productId
+    );
+    if (productIndex === -1) {
+      return false;
+    }
+
+    this.data.products.splice(productIndex, 1);
+
+    // Remove from featured/bestsellers/etc arrays if present
+    this.data.featuredProducts = this.data.featuredProducts.filter(
+      (id) => id !== productId
+    );
+    this.data.bestSellers = this.data.bestSellers.filter(
+      (id) => id !== productId
+    );
+    this.data.newArrivals = this.data.newArrivals.filter(
+      (id) => id !== productId
+    );
+    this.data.saleProducts = this.data.saleProducts.filter(
+      (id) => id !== productId
+    );
+
+    return true;
+  }
+
+  // Delete category (in-memory only - for demo purposes)
+  deleteCategory(categoryId: string): boolean {
+    const categoryIndex = this.data.categories.findIndex(
+      (c) => c.id === categoryId
+    );
+    if (categoryIndex === -1) {
+      return false;
+    }
+
+    // Check if any products use this category
+    const productsInCategory = this.getProductsByCategory(categoryId);
+    if (productsInCategory.length > 0) {
+      throw new Error(
+        `Cannot delete category '${categoryId}' because it contains ${productsInCategory.length} products`
+      );
+    }
+
+    this.data.categories.splice(categoryIndex, 1);
+    return true;
+  }
 }
 
 // Export singleton instance

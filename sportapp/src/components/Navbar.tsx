@@ -11,10 +11,12 @@ interface NavbarProps {
   onHomeClick?: () => void;
   onAllProductsClick?: () => void;
   onCategoryClick?: (categoryId: string) => void;
+  onAdminClick?: () => void;
 }
 
 const Navbar: React.FC<NavbarProps> = ({ 
-  onHomeClick
+  onHomeClick,
+  onAdminClick
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -106,7 +108,7 @@ const Navbar: React.FC<NavbarProps> = ({
 
           {/* Right side icons */}
           <div className="hidden md:flex items-center space-x-4">
-            <UserDropdown />
+            <UserDropdown onAdminClick={onAdminClick} />
             <Button 
               variant="ghost" 
               size="icon" 
