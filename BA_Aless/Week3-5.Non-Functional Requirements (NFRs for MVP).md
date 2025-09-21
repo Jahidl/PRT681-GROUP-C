@@ -1,6 +1,6 @@
 # 5. Non-Functional Requirements (NFRs for MVP)
 ## Performance:
-  - Pages load within 3 seconds under normal load (≤50 concurrent users).
+  - Pages load within 3 seconds under normal load (≤5000 concurrent users).
   - Cart update must be reflected within 1 second.
 ## Security:
   - Passwords stored with hashing (bcrypt/argon2).
