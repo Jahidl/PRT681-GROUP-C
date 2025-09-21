@@ -12,12 +12,11 @@ import ProductDetail from './components/ProductDetail'
 import Cart from './components/Cart'
 import AuthModal from './components/AuthModal'
 import AdminDashboard from './components/admin/AdminDashboard'
-import CategoryManagement from './components/CategoryManagement'
 import { CartProvider } from './contexts/CartContext'
 import { AuthProvider } from './contexts/AuthContext'
 import { productService } from './services/productService'
 
-type Page = 'home' | 'category' | 'all-products' | 'product-detail' | 'admin' | 'category-management'
+type Page = 'home' | 'category' | 'all-products' | 'product-detail' | 'admin'
 
 function AppContent() {
   const [currentPage, setCurrentPage] = useState<Page>('home')
@@ -28,8 +27,6 @@ function AppContent() {
     switch (currentPage) {
       case 'admin':
         return <AdminDashboard />
-      case 'category-management':
-        return <CategoryManagement />
       case 'category':
         return (
           <CategoryPage 
@@ -151,12 +148,6 @@ function AppContent() {
           >
             Admin Dashboard
           </button>
-          <button
-            onClick={() => setCurrentPage('category-management')}
-            className="block w-full text-left text-xs text-gray-300 hover:text-white px-2 py-1 rounded hover:bg-gray-800"
-          >
-            Category Management
-          </button>
         </div>
       )}
 
@@ -173,7 +164,7 @@ function AppContent() {
       )}
       
       {/* Page Content */}
-      <main className={currentPage === 'admin' || currentPage === 'category-management' ? 'pt-16' : ''}>
+      <main className={currentPage === 'admin' ? 'pt-16' : ''}>
         {renderPage()}
       </main>
       
@@ -188,8 +179,8 @@ function AppContent() {
       {/* Authentication Modal */}
       <AuthModal />
       
-      {currentPage !== 'admin' && currentPage !== 'category-management' && <Footer />}
-      {currentPage !== 'admin' && currentPage !== 'category-management' && <BackToTop />}
+      {currentPage !== 'admin' && <Footer />}
+      {currentPage !== 'admin' && <BackToTop />}
     </div>
   )
 }

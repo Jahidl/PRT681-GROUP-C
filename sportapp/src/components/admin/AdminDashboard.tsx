@@ -7,7 +7,6 @@ import {
   Plus, 
   Search,
   Filter,
-  MoreVertical,
   Edit,
   Trash2,
   Eye
@@ -16,6 +15,7 @@ import { Button } from '../ui/button';
 import { productService } from '../../services/productService';
 import CreateProduct from './CreateProduct';
 import CreateCategory from './CreateCategory';
+import CategoryManagement from '../CategoryManagement';
 
 type AdminView = 'dashboard' | 'products' | 'categories' | 'users' | 'orders' | 'create-product' | 'create-category';
 
@@ -315,50 +315,7 @@ const AdminDashboard: React.FC = () => {
     </div>
   );
 
-  const renderCategoriesView = () => (
-    <div className="p-8">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Categories</h1>
-          <p className="text-gray-400">Manage product categories</p>
-        </div>
-        <Button 
-          onClick={() => setCurrentView('create-category')}
-          className="bg-orange-500 hover:bg-orange-600 text-white"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add Category
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {categories.map((category) => (
-          <div key={category.id} className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="text-lg font-semibold text-white">{category.name}</h3>
-              <Button size="sm" variant="ghost" className="text-gray-400 hover:text-white">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </div>
-            <p className="text-gray-400 text-sm mb-4">{category.description}</p>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-500">
-                {productService.getProductsByCategory(category.id).length} products
-              </span>
-              <div className="flex space-x-2">
-                <Button size="sm" variant="ghost" className="text-gray-400 hover:text-white">
-                  <Edit className="h-4 w-4" />
-                </Button>
-                <Button size="sm" variant="ghost" className="text-red-400 hover:text-red-300">
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+  const renderCategoriesView = () => <CategoryManagement />;
 
   const renderPlaceholderView = (title: string, description: string) => (
     <div className="p-8 flex items-center justify-center min-h-[60vh]">
