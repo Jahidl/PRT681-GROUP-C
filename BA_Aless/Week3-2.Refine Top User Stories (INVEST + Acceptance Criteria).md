@@ -1,6 +1,6 @@
 # 2. Refine Top User Stories (INVEST + Acceptance Criteria)
 
-##Story 1: User Registration
+## Story 1: User Registration
 
 As a new user, I want to register so I can create an account and save my orders.
   - Independent: Works on its own.
