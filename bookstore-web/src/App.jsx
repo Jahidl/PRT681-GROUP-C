@@ -13,6 +13,7 @@ function Nav() {
     <nav style={{display:"flex", gap:12, padding:16, borderBottom:"1px solid #eee"}}>
       <Link to="/">Home</Link>
       <Link to="/books">Books</Link>
+      
       <Link to="/cart">Cart</Link>
       <Link to="/profile">Profile</Link>
       <span style={{marginLeft:"auto"}} />
