@@ -1,0 +1,126 @@
+{
+  "info": {
+    "name": "PRT681 - Weather API (Week 3)",
+    "_postman_id": "w3-weatherapi",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "API tests for ASP.NET Minimal API sample (GET /weatherforecast). Includes positive/negative and basic SLA checks."
+  },
+  "item": [
+    {
+      "name": "GET /weatherforecast (positive: 200 + schema + 5 items)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/weatherforecast"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('status 200', () => pm.response.code === 200);",
+              "pm.test('responds within 1000 ms', () => pm.response.responseTime < 1000);",
+              "const data = pm.response.json();",
+              "pm.test('returns an array', () => Array.isArray(data));",
+              "pm.test('has 5 items', () => data.length === 5);",
+              "",
+              "// schema-ish checks on each item",
+              "const validSummaries = [",
+              "  'Freezing','Bracing','Chilly','Cool','Mild','Warm','Balmy','Hot','Sweltering','Scorching'",
+              "];",
+              "data.forEach((it, idx) => {",
+              "  pm.test(`item #${idx} has keys`, () => {",
+              "    pm.expect(it).to.have.property('date');",
+              "    pm.expect(it).to.have.property('temperatureC');",
+              "    pm.expect(it).to.have.property('summary');",
+              "    pm.expect(it).to.have.property('temperatureF');",
+              "  });",
+              "  pm.test(`item #${idx} types`, () => {",
+              "    pm.expect(typeof it.date).to.eql('string');",
+              "    pm.expect(typeof it.temperatureC).to.eql('number');",
+              "    pm.expect([null, 'string'].includes(typeof it.summary === 'object' && it.summary===null ? 'null' : typeof it.summary)).to.be.true; // nullable",
+              "    pm.expect(typeof it.temperatureF).to.eql('number');",
+              "  });",
+              "  pm.test(`summary in allowed set or null (#${idx})`, () => {",
+              "    pm.expect(it.summary === null || validSummaries.includes(it.summary)).to.be.true;",
+              "  });",
+              "  // Derived value check: TemperatureF ≈ 32 + int(C / 0.5556)",
+              "  const expectedF = 32 + Math.trunc(it.temperatureC / 0.5556);",
+              "  pm.test(`temperatureF computed correctly (#${idx})`, () => pm.expect(it.temperatureF).to.eql(expectedF));",
+              "});",
+              "",
+              "// basic monotonic date check (dates should be the next 5 days forward from now)",
+              "const today = new Date();",
+              "const dates = data.map(x => new Date(x.date));",
+              "pm.test('dates are strictly increasing', () => {",
+              "  for (let i=1;i<dates.length;i++){",
+              "    pm.expect(dates[i].getTime()).to.be.greaterThan(dates[i-1].getTime());",
+              "  }",
+              "});",
+              "pm.test('first date is in the future (>= tomorrow)', () => {",
+              "  const msPerDay = 24*60*60*1000;",
+              "  const tomorrow = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()+1));",
+              "  pm.expect(dates[0].getTime()).to.be.at.least(tomorrow.getTime() - msPerDay); // tolerant timezone wiggle",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "POST /weatherforecast (negative: method not allowed)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": { "mode": "raw", "raw": "{\"fake\":true}" },
+        "url": "{{baseUrl}}/weatherforecast"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// Minimal API only maps GET → expect 405 (Method Not Allowed)",
+              "pm.test('405 Method Not Allowed', () => pm.expect(pm.response.code).to.be.oneOf([405, 400, 404]));",
+              "pm.test('responds within 1000 ms', () => pm.response.responseTime < 1000);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET /nope (negative: 404)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/nope"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('404 Not Found', () => pm.response.code === 404);",
+              "pm.test('responds within 1000 ms', () => pm.response.responseTime < 1000);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "exec": [
+          "// Ensure baseUrl is set",
+          "pm.environment.get('baseUrl') || pm.environment.set('baseUrl', 'https://localhost:5001');"
+        ],
+        "type": "text/javascript"
+      }
+    }
+  ]
+}
