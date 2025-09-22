@@ -1,41 +1,51 @@
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5001").replace(/\/$/, "");
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8080").replace(/\/$/, "");
 
-/** Helper that always hits your /api/auth/* endpoints */
-async function authFetch(path, options = {}) {
-  const res = await fetch(API_BASE + path, {
-    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
-    ...options
+async function http(path, opts = {}) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    headers: { "Content-Type": "application/json", ...(opts.headers || {}) },
+    ...opts,
   });
   if (!res.ok) {
-    let text = await res.text().catch(() => "");
+    const text = await res.text().catch(() => "");
     throw new Error(text || `HTTP ${res.status}`);
   }
-  return res;
+  return res.headers.get("content-type")?.includes("application/json") ? res.json() : res.text();
 }
 
-export async function login({ emailAddress, password }) {
-  const res = await authFetch("/api/auth/login", {
-    method: "POST",
-    body: JSON.stringify({ emailAddress, password })
-  });
-  const data = await res.json();
-  // Response shape: { accessToken, user: {...} }
-  if (!data?.accessToken) throw new Error("No accessToken returned.");
-  return data;
+// PRODUCTS
+export async function listProducts(params = {}) {
+  const qs = new URLSearchParams();
+  if (params.q) qs.set("q", params.q);
+  if (params.categoryId) qs.set("categoryId", params.categoryId);
+  if (params.sort) qs.set("sort", params.sort);
+  if (params.page) qs.set("page", String(params.page));
+  if (params.pageSize) qs.set("pageSize", String(params.pageSize));
+  const query = qs.toString() ? `?${qs.toString()}` : "";
+  return http(`/api/products${query}`);
 }
 
-export async function register({ firstName, lastName, phoneNumber, emailAddress, password, confirmPassword }) {
-  const res = await authFetch("/api/auth/register", {
+export async function getProduct(id) {
+  return http(`/api/products/${id}`);
+}
+
+// ADMIN (example—attach auth if you secure them)
+export async function createProduct(data, token) {
+  return http(`/api/products`, {
     method: "POST",
-    body: JSON.stringify({
-      firstName,
-      lastName,
-      phoneNumber: phoneNumber || null,
-      emailAddress,
-      password,
-      confirmPassword
-    })
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    body: JSON.stringify(data),
   });
-  // Created user object (no token) -> return it
-  return res.json();
+}
+export async function updateProduct(id, data, token) {
+  return http(`/api/products/${id}`, {
+    method: "PUT",
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    body: JSON.stringify(data),
+  });
+}
+export async function deleteProduct(id, token) {
+  return http(`/api/products/${id}`, {
+    method: "DELETE",
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  });
 }

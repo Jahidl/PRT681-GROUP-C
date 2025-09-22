@@ -8,8 +8,10 @@ services:
       - ACCEPT_EULA=Y
       - MSSQL_SA_PASSWORD=${MSSQL_SA_PASSWORD:-Your_strong_password123}
       - MSSQL_PID=Developer
+    # ports:
+    #   - "1433:1433"
     ports:
-      - "1433:1433"
+      - "11433:1433" 
     volumes:
       - sql_data:/var/opt/mssql
 
@@ -53,6 +55,19 @@ services:
       - api
     ports:
       - "5174:80"
+   
+  bookstore:
+    build:
+      context: ./bookstore-web        # <- book store front end
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:8080}
+    container_name: cdu_bookstore
+    depends_on:
+      - api
+    ports:
+      - "5175:80"
+
 
 volumes:
   sql_data:
