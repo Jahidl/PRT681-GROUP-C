@@ -1,10 +1,10 @@
 # 6. Change Log & Knowledge Base
 
 ## Change Log    
-	•	2025-09-25: Added API/UI mappings to RTM.
-	•	2025-09-26: Updated validation rules with test cases.
-	•	2025-09-27: Drafted story map (epic → feature → story).
-	•	2025-09-28: UAT plan prepared (Week 4).
+   - 2025-09-25: Added API/UI mappings to RTM.
+   - 2025-09-26: Updated validation rules with test cases.
+   - 2025-09-27: Drafted story map (epic → feature → story).
+   - 2025-09-28: UAT plan prepared (Week 4).
 
 ## Knowledge Base
    - FAQ
