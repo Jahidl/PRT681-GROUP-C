@@ -140,13 +140,78 @@ const CategoryManagement: React.FC = () => {
     );
   };
 
-  const initialFormData: CategoryFormData = {
+
+  const validateCategoryName = (value: string) => {
+    if (!value || value.trim() === "") {
+      return "🏷️ Please enter a category name to continue";
+    }
+    if (value.trim().length < 2) {
+      return "📝 Category name should be at least 2 characters for better readability";
+    }
+    if (value.trim().length > 50) {
+      return "✂️ Category name is too long. Please keep it under 50 characters";
+    }
+    // Check for duplicate names (excluding current category when editing)
+    const existingCategory = categories.find(cat => 
+      cat.name.toLowerCase() === value.trim().toLowerCase() && 
+      (!editingCategory || cat.id !== editingCategory.id)
+    );
+    if (existingCategory) {
+      return "⚠️ This category name already exists. Please choose a unique name";
+    }
+    return "";
+  };
+
+  const validateDescription = (value: string) => {
+    if (!value || value.trim() === "") {
+      return "📄 Please provide a description to help users understand this category";
+    }
+    if (value.trim().length < 10) {
+      return "📝 Description should be at least 10 characters to be meaningful";
+    }
+    if (value.trim().length > 500) {
+      return "✂️ Description is too long. Please keep it under 500 characters";
+    }
+    return "";
+  };
+
+  const validateImageUrl = (value: string) => {
+    if (!value || value.trim() === "") {
+      return "🖼️ Please provide an image URL to make your category visually appealing";
+    }
+    // Basic URL validation
+    const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
+    if (!urlPattern.test(value.trim())) {
+      return "🔗 Please enter a valid URL (e.g., https://example.com/image.jpg)";
+    }
+    // Check for image file extensions
+    const imageExtensions = /\.(jpg|jpeg|png|gif|webp|svg)$/i;
+    if (!imageExtensions.test(value.trim())) {
+      return "🖼️ Please use a valid image format: .jpg, .jpeg, .png, .gif, .webp, or .svg";
+    }
+    return "";
+  };
+
+  const validateSortOrder = (value: number) => {
+    if (value === null || value === undefined) {
+      return "🔢 Please specify a sort order to organize categories properly";
+    }
+    if (value < 0) {
+      return "➕ Sort order must be a positive number (0 or greater)";
+    }
+    if (value > 999) {
+      return "📊 Sort order must be 999 or less for better organization";
+    }
+    return "";
+  };
+
+  const getInitialFormData = (): CategoryFormData => ({
     name: editingCategory?.name || "",
     description: editingCategory?.description || "",
     image: editingCategory?.image || "",
     isActive: editingCategory?.isActive ?? true,
     sortOrder: editingCategory?.sortOrder || 0,
-  };
+  });
 
   return (
     <div className="p-6 bg-gray-900 min-h-screen">
@@ -217,58 +282,58 @@ const CategoryManagement: React.FC = () => {
           >
             <Form
               onSubmit={handleSubmit}
-              initialValues={initialFormData}
+              initialValues={getInitialFormData()}
               render={(formRenderProps) => (
                 <FormElement style={{ maxWidth: 650 }}>
                   <fieldset className="k-form-fieldset">
-                    <div className="mb-3">
+                    <div className="mb-4">
                       <Field
                         name="name"
                         component={Input}
-                        label="Category Name"
-                        required
-                        validator={(value) =>
-                          !value ? "Category name is required" : ""
-                        }
+                        label="Category Name *"
+                        validator={validateCategoryName}
+                        placeholder="Enter a descriptive category name"
                       />
                     </div>
-                    <div className="mb-3">
+                    <div className="mb-4">
                       <Field
                         name="description"
                         component={Input}
-                        label="Description"
-                        required
-                        validator={(value) =>
-                          !value ? "Description is required" : ""
-                        }
+                        label="Description *"
+                        validator={validateDescription}
+                        placeholder="Describe what products belong in this category"
                       />
                     </div>
-                    <div className="mb-3">
+                    <div className="mb-4">
                       <Field
                         name="image"
                         component={Input}
-                        label="Image URL"
-                        required
-                        validator={(value) =>
-                          !value ? "Image URL is required" : ""
-                        }
+                        label="Image URL *"
+                        validator={validateImageUrl}
+                        placeholder="https://example.com/category-image.jpg"
                       />
                     </div>
-                    <div className="mb-3">
+                    <div className="mb-4">
                       <Field
                         name="sortOrder"
                         component={NumericTextBox}
-                        label="Sort Order"
+                        label="Sort Order *"
+                        validator={validateSortOrder}
                         min={0}
+                        max={999}
                         format="n0"
                       />
                     </div>
-                    <div className="mb-3">
+                    <div className="mb-4">
                       <Field
                         name="isActive"
                         component={Checkbox}
-                        label="Active"
+                        label="Active Category"
                       />
+                      <div className="k-form-hint" style={{ marginTop: "8px", fontSize: "12px", color: "#666" }}>
+                        <span className="k-icon k-i-information" style={{ marginRight: "4px" }}></span>
+                        Active categories will be visible to customers
+                      </div>
                     </div>
                   </fieldset>
                   <DialogActionsBar>
