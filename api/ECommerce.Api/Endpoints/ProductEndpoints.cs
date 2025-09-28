@@ -3,6 +3,7 @@ using ECommerce.Api.DTOs;
 using ECommerce.Api.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace ECommerce.Api.Endpoints
 {
@@ -12,134 +13,271 @@ namespace ECommerce.Api.Endpoints
         {
             var group = routes.MapGroup("/api/products");
 
-            // LIST with search/sort/pagination  ✅ required params first
-            group.MapGet("", async (
-                AppDbContext db,
-                [FromQuery] string? q,
-                [FromQuery] int page = 1,
-                [FromQuery] int pageSize = 12,
-                [FromQuery] string? sort = "nameAsc",
-                [FromQuery] decimal? minPrice = null,
-                [FromQuery] decimal? maxPrice = null) =>
+            // GET all products
+            group.MapGet("/", async (AppDbContext db) =>
             {
-                page = page <= 0 ? 1 : page;
-                pageSize = pageSize <= 0 ? 12 : pageSize;
-
-                IQueryable<Product> query = db.Products.AsNoTracking();
-
-                if (!string.IsNullOrWhiteSpace(q))
-                {
-                    var term = q.Trim();
-                    query = query.Where(p =>
-                        p.Name.Contains(term) ||
-                        (p.Description != null && p.Description.Contains(term)) ||
-                        (p.Sku != null && p.Sku.Contains(term)));
-                }
-
-                if (minPrice.HasValue) query = query.Where(p => p.Price >= minPrice.Value);
-                if (maxPrice.HasValue) query = query.Where(p => p.Price <= maxPrice.Value);
-
-                query = sort?.ToLower() switch
-                {
-                    "priceasc" => query.OrderBy(p => p.Price).ThenBy(p => p.Id),
-                    "pricedesc" => query.OrderByDescending(p => p.Price).ThenBy(p => p.Id),
-                    "namedesc" => query.OrderByDescending(p => p.Name).ThenBy(p => p.Id),
-                    _ => query.OrderBy(p => p.Name).ThenBy(p => p.Id)
-                };
-
-                var total = await query.CountAsync();
-                var items = await query
-                    .Skip((page - 1) * pageSize)
-                    .Take(pageSize)
-                    .Select(p => new ProductListItemDto
-                    {
-                        Id = p.Id,
-                        Name = p.Name,
-                        Price = p.Price,
-                        ImageUrl = p.ImageUrl,
-                        Stock = p.Stock
-                    })
-                    .ToListAsync();
-
-                var result = new PagedResult<ProductListItemDto>
-                {
-                    Items = items,
-                    Page = page,
-                    PageSize = pageSize,
-                    TotalCount = total
-                };
-                return Results.Ok(result);
-            });
-
-            // GET by id
-            group.MapGet("/{id:int}", async (int id, AppDbContext db) =>
-            {
-                var p = await db.Products.AsNoTracking()
-                    .Where(x => x.Id == id)
-                    .Select(p => new ProductDetailDto
+                var products = await db.Products
+                    .Include(p => p.Category)
+                    .Include(p => p.Subcategory)
+                    .Where(p => p.IsActive)
+                    .OrderBy(p => p.Name)
+                    .Select(p => new ProductResponse
                     {
                         Id = p.Id,
                         Name = p.Name,
                         Description = p.Description,
                         Price = p.Price,
-                        ImageUrl = p.ImageUrl,
-                        Stock = p.Stock,
-                        Sku = p.Sku,
+                        OriginalPrice = p.OriginalPrice,
+                        CategoryId = p.CategoryId,
+                        SubcategoryId = p.SubcategoryId,
+                        Brand = p.Brand,
+                        Rating = p.Rating,
+                        ReviewCount = p.ReviewCount,
+                        InStock = p.InStock,
+                        StockCount = p.StockCount,
+                        Images = JsonSerializer.Deserialize<List<string>>(p.Images) ?? new List<string>(),
+                        Features = JsonSerializer.Deserialize<List<string>>(p.Features) ?? new List<string>(),
+                        Specifications = JsonSerializer.Deserialize<Dictionary<string, string>>(p.Specifications) ?? new Dictionary<string, string>(),
+                        Tags = JsonSerializer.Deserialize<List<string>>(p.Tags) ?? new List<string>(),
+                        Sizes = string.IsNullOrEmpty(p.Sizes) ? null : JsonSerializer.Deserialize<List<string>>(p.Sizes),
+                        Colors = string.IsNullOrEmpty(p.Colors) ? null : JsonSerializer.Deserialize<List<string>>(p.Colors),
                         CreatedAtUtc = p.CreatedAtUtc,
-                        UpdatedAtUtc = p.UpdatedAtUtc
+                        UpdatedAtUtc = p.UpdatedAtUtc,
+                        IsActive = p.IsActive,
+                        CategoryName = p.Category != null ? p.Category.Name : null,
+                        SubcategoryName = p.Subcategory != null ? p.Subcategory.Name : null
+                    })
+                    .ToListAsync();
+
+                return Results.Ok(products);
+            })
+            .WithName("GetProducts")
+            .WithOpenApi();
+
+            // GET product by ID
+            group.MapGet("/{id}", async (string id, AppDbContext db) =>
+            {
+                var product = await db.Products
+                    .Include(p => p.Category)
+                    .Include(p => p.Subcategory)
+                    .Where(p => p.Id == id)
+                    .Select(p => new ProductResponse
+                    {
+                        Id = p.Id,
+                        Name = p.Name,
+                        Description = p.Description,
+                        Price = p.Price,
+                        OriginalPrice = p.OriginalPrice,
+                        CategoryId = p.CategoryId,
+                        SubcategoryId = p.SubcategoryId,
+                        Brand = p.Brand,
+                        Rating = p.Rating,
+                        ReviewCount = p.ReviewCount,
+                        InStock = p.InStock,
+                        StockCount = p.StockCount,
+                        Images = JsonSerializer.Deserialize<List<string>>(p.Images) ?? new List<string>(),
+                        Features = JsonSerializer.Deserialize<List<string>>(p.Features) ?? new List<string>(),
+                        Specifications = JsonSerializer.Deserialize<Dictionary<string, string>>(p.Specifications) ?? new Dictionary<string, string>(),
+                        Tags = JsonSerializer.Deserialize<List<string>>(p.Tags) ?? new List<string>(),
+                        Sizes = string.IsNullOrEmpty(p.Sizes) ? null : JsonSerializer.Deserialize<List<string>>(p.Sizes),
+                        Colors = string.IsNullOrEmpty(p.Colors) ? null : JsonSerializer.Deserialize<List<string>>(p.Colors),
+                        CreatedAtUtc = p.CreatedAtUtc,
+                        UpdatedAtUtc = p.UpdatedAtUtc,
+                        IsActive = p.IsActive,
+                        CategoryName = p.Category != null ? p.Category.Name : null,
+                        SubcategoryName = p.Subcategory != null ? p.Subcategory.Name : null
                     })
                     .FirstOrDefaultAsync();
 
-                return p is null ? Results.NotFound() : Results.Ok(p);
-            });
+                if (product == null)
+                {
+                    return Results.NotFound();
+                }
 
-            // CREATE
-            group.MapPost("", async ([FromBody] CreateProductRequest req, AppDbContext db) =>
+                return Results.Ok(product);
+            })
+            .WithName("GetProductById")
+            .WithOpenApi();
+
+            // POST create product
+            group.MapPost("/", async ([FromBody] CreateProductRequest request, AppDbContext db) =>
             {
+                if (request == null)
+                {
+                    return Results.BadRequest(new { message = "Invalid request" });
+                }
+
+                // Check if product ID already exists
+                var exists = await db.Products.AnyAsync(p => p.Id == request.Id);
+                if (exists)
+                {
+                    return Results.Conflict(new { message = "Product ID already exists" });
+                }
+
+                // Verify category exists
+                var categoryExists = await db.Categories.AnyAsync(c => c.Id == request.CategoryId);
+                if (!categoryExists)
+                {
+                    return Results.BadRequest(new { message = "Category not found" });
+                }
+
+                // Verify subcategory exists if provided
+                if (!string.IsNullOrEmpty(request.SubcategoryId))
+                {
+                    var subcategoryExists = await db.Subcategories.AnyAsync(s => s.Id == request.SubcategoryId && s.CategoryId == request.CategoryId);
+                    if (!subcategoryExists)
+                    {
+                        return Results.BadRequest(new { message = "Subcategory not found or doesn't belong to the specified category" });
+                    }
+                }
+
                 var product = new Product
                 {
-                    Name = req.Name.Trim(),
-                    Description = req.Description?.Trim(),
-                    Price = req.Price,
-                    ImageUrl = req.ImageUrl,
-                    Stock = req.Stock,
-                    Sku = req.Sku
+                    Id = request.Id,
+                    Name = request.Name.Trim(),
+                    Description = request.Description.Trim(),
+                    Price = request.Price,
+                    OriginalPrice = request.OriginalPrice,
+                    CategoryId = request.CategoryId,
+                    SubcategoryId = request.SubcategoryId,
+                    Brand = request.Brand.Trim(),
+                    Rating = request.Rating,
+                    ReviewCount = request.ReviewCount,
+                    InStock = request.InStock,
+                    StockCount = request.StockCount,
+                    Images = JsonSerializer.Serialize(request.Images),
+                    Features = JsonSerializer.Serialize(request.Features),
+                    Specifications = JsonSerializer.Serialize(request.Specifications),
+                    Tags = JsonSerializer.Serialize(request.Tags),
+                    Sizes = request.Sizes != null ? JsonSerializer.Serialize(request.Sizes) : null,
+                    Colors = request.Colors != null ? JsonSerializer.Serialize(request.Colors) : null,
+                    IsActive = request.IsActive
                 };
 
                 db.Products.Add(product);
                 await db.SaveChangesAsync();
 
-                return Results.Created($"/api/products/{product.Id}", new { product.Id });
-            });
+                var response = new ProductResponse
+                {
+                    Id = product.Id,
+                    Name = product.Name,
+                    Description = product.Description,
+                    Price = product.Price,
+                    OriginalPrice = product.OriginalPrice,
+                    CategoryId = product.CategoryId,
+                    SubcategoryId = product.SubcategoryId,
+                    Brand = product.Brand,
+                    Rating = product.Rating,
+                    ReviewCount = product.ReviewCount,
+                    InStock = product.InStock,
+                    StockCount = product.StockCount,
+                    Images = request.Images,
+                    Features = request.Features,
+                    Specifications = request.Specifications,
+                    Tags = request.Tags,
+                    Sizes = request.Sizes,
+                    Colors = request.Colors,
+                    CreatedAtUtc = product.CreatedAtUtc,
+                    UpdatedAtUtc = product.UpdatedAtUtc,
+                    IsActive = product.IsActive
+                };
 
-            // UPDATE (partial)
-            group.MapPut("/{id:int}", async (int id, [FromBody] UpdateProductRequest req, AppDbContext db) =>
+                return Results.Created($"/api/products/{product.Id}", response);
+            })
+            .WithName("CreateProduct")
+            .WithOpenApi();
+
+            // PUT update product
+            group.MapPut("/{id}", async (string id, [FromBody] UpdateProductRequest request, AppDbContext db) =>
             {
-                var p = await db.Products.FirstOrDefaultAsync(x => x.Id == id);
-                if (p is null) return Results.NotFound();
+                var product = await db.Products.FirstOrDefaultAsync(p => p.Id == id);
+                if (product == null)
+                {
+                    return Results.NotFound();
+                }
 
-                if (req.Name is not null) p.Name = req.Name.Trim();
-                if (req.Description is not null) p.Description = req.Description.Trim();
-                if (req.Price.HasValue) p.Price = req.Price.Value;
-                if (req.ImageUrl is not null) p.ImageUrl = req.ImageUrl;
-                if (req.Stock.HasValue) p.Stock = req.Stock.Value;
-                if (req.Sku is not null) p.Sku = req.Sku;
+                // Verify category exists
+                var categoryExists = await db.Categories.AnyAsync(c => c.Id == request.CategoryId);
+                if (!categoryExists)
+                {
+                    return Results.BadRequest(new { message = "Category not found" });
+                }
 
-                p.UpdatedAtUtc = DateTime.UtcNow;
+                // Verify subcategory exists if provided
+                if (!string.IsNullOrEmpty(request.SubcategoryId))
+                {
+                    var subcategoryExists = await db.Subcategories.AnyAsync(s => s.Id == request.SubcategoryId && s.CategoryId == request.CategoryId);
+                    if (!subcategoryExists)
+                    {
+                        return Results.BadRequest(new { message = "Subcategory not found or doesn't belong to the specified category" });
+                    }
+                }
+
+                product.Name = request.Name.Trim();
+                product.Description = request.Description.Trim();
+                product.Price = request.Price;
+                product.OriginalPrice = request.OriginalPrice;
+                product.CategoryId = request.CategoryId;
+                product.SubcategoryId = request.SubcategoryId;
+                product.Brand = request.Brand.Trim();
+                product.Rating = request.Rating;
+                product.ReviewCount = request.ReviewCount;
+                product.InStock = request.InStock;
+                product.StockCount = request.StockCount;
+                product.Images = JsonSerializer.Serialize(request.Images);
+                product.Features = JsonSerializer.Serialize(request.Features);
+                product.Specifications = JsonSerializer.Serialize(request.Specifications);
+                product.Tags = JsonSerializer.Serialize(request.Tags);
+                product.Sizes = request.Sizes != null ? JsonSerializer.Serialize(request.Sizes) : null;
+                product.Colors = request.Colors != null ? JsonSerializer.Serialize(request.Colors) : null;
+                product.IsActive = request.IsActive;
+                product.UpdatedAtUtc = DateTime.UtcNow;
+
+                await db.SaveChangesAsync();
+
+                return Results.Ok(new ProductResponse
+                {
+                    Id = product.Id,
+                    Name = product.Name,
+                    Description = product.Description,
+                    Price = product.Price,
+                    OriginalPrice = product.OriginalPrice,
+                    CategoryId = product.CategoryId,
+                    SubcategoryId = product.SubcategoryId,
+                    Brand = product.Brand,
+                    Rating = product.Rating,
+                    ReviewCount = product.ReviewCount,
+                    InStock = product.InStock,
+                    StockCount = product.StockCount,
+                    Images = request.Images,
+                    Features = request.Features,
+                    Specifications = request.Specifications,
+                    Tags = request.Tags,
+                    Sizes = request.Sizes,
+                    Colors = request.Colors,
+                    CreatedAtUtc = product.CreatedAtUtc,
+                    UpdatedAtUtc = product.UpdatedAtUtc,
+                    IsActive = product.IsActive
+                });
+            })
+            .WithName("UpdateProduct")
+            .WithOpenApi();
+
+            // DELETE product
+            group.MapDelete("/{id}", async (string id, AppDbContext db) =>
+            {
+                var product = await db.Products.FirstOrDefaultAsync(p => p.Id == id);
+                if (product == null)
+                {
+                    return Results.NotFound();
+                }
+
+                db.Products.Remove(product);
                 await db.SaveChangesAsync();
                 return Results.NoContent();
-            });
-
-            // DELETE
-            group.MapDelete("/{id:int}", async (int id, AppDbContext db) =>
-            {
-                var p = await db.Products.FirstOrDefaultAsync(x => x.Id == id);
-                if (p is null) return Results.NotFound();
-
-                db.Products.Remove(p);
-                await db.SaveChangesAsync();
-                return Results.NoContent();
-            });
+            })
+            .WithName("DeleteProduct")
+            .WithOpenApi();
 
             return routes;
         }
