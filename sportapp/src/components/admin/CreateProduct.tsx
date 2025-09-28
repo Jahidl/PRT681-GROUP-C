@@ -20,7 +20,7 @@ const emptyProduct: Partial<Product> = {
 const CreateProduct: React.FC<CreateProductProps> = ({ onCancel, onCreated }) => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [form, setForm] = useState<Partial<Product>>({ ...emptyProduct });
-  const [imageInput, setImageInput] = useState('');
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [featureInput, setFeatureInput] = useState('');
   const [tagInput, setTagInput] = useState('');
   const [specKey, setSpecKey] = useState('');
@@ -62,11 +62,35 @@ const CreateProduct: React.FC<CreateProductProps> = ({ onCancel, onCreated }) =>
     setForm(prev => ({ ...prev, ...patch }));
   };
 
-  const pushToList = (kind: 'images' | 'features' | 'tags') => {
-    if (kind === 'images' && imageInput.trim()) {
-      updateForm({ images: [...(form.images || []), imageInput.trim()] });
-      setImageInput('');
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      const newFiles = Array.from(files);
+      setSelectedImages(prev => [...prev, ...newFiles]);
+      
+      // Convert files to URLs for preview and form data
+      const imageUrls = newFiles.map(file => URL.createObjectURL(file));
+      updateForm({ images: [...(form.images || []), ...imageUrls] });
     }
+  };
+
+  const removeImage = (index: number) => {
+    const updatedImages = [...(form.images || [])];
+    const updatedFiles = [...selectedImages];
+    
+    // Revoke the object URL to free memory
+    if (updatedImages[index]?.startsWith('blob:')) {
+      URL.revokeObjectURL(updatedImages[index]);
+    }
+    
+    updatedImages.splice(index, 1);
+    updatedFiles.splice(index, 1);
+    
+    updateForm({ images: updatedImages });
+    setSelectedImages(updatedFiles);
+  };
+
+  const pushToList = (kind: 'features' | 'tags') => {
     if (kind === 'features' && featureInput.trim()) {
       updateForm({ features: [...(form.features || []), featureInput.trim()] });
       setFeatureInput('');
@@ -128,7 +152,17 @@ const CreateProduct: React.FC<CreateProductProps> = ({ onCancel, onCreated }) =>
       const created = productService.addProduct(payload);
       setSuccess(`Product '${created.name}' created.`);
       onCreated?.(created.id);
+      
+      // Reset form and clear images
       setForm({ ...emptyProduct });
+      setSelectedImages([]);
+      
+      // Revoke all object URLs to free memory
+      (form.images || []).forEach(img => {
+        if (img.startsWith('blob:')) {
+          URL.revokeObjectURL(img);
+        }
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create product');
     } finally {
@@ -285,23 +319,57 @@ const CreateProduct: React.FC<CreateProductProps> = ({ onCancel, onCreated }) =>
 
               {/* Images */}
               <div className="md:col-span-12">
-                <label className="block text-sm font-medium text-gray-300 mb-2">Images</label>
-                <div className="flex gap-3">
-                  <input
-                    value={imageInput}
-                    onChange={e => setImageInput(e.target.value)}
-                    placeholder="/products/your-image.jpg or https://..."
-                    className="flex-1 px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  />
-                  <Button type="button" variant="outline" onClick={() => pushToList('images')} className="border-gray-600 text-gray-300 hover:text-white hover:bg-gray-800">Add</Button>
-                </div>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {(form.images || []).map((img, i) => (
-                    <div key={i} className="text-xs text-gray-300 bg-gray-800 border border-gray-700 rounded px-2 py-1 flex items-center gap-2">
-                      <span className="truncate max-w-[280px]">{img}</span>
-                      <button type="button" onClick={() => removeFromList('images', i)} className="text-red-400 hover:text-red-300">Remove</button>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Product Images</label>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-center w-full">
+                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-600 border-dashed rounded-lg cursor-pointer bg-gray-800 hover:bg-gray-700 hover:border-gray-500 transition-colors">
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <svg className="w-8 h-8 mb-4 text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                          <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                        </svg>
+                        <p className="mb-2 text-sm text-gray-400">
+                          <span className="font-semibold">Click to upload</span> or drag and drop
+                        </p>
+                        <p className="text-xs text-gray-500">PNG, JPG, JPEG, WebP (MAX. 10MB each)</p>
+                      </div>
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                  
+                  {/* Image Previews */}
+                  {(form.images || []).length > 0 && (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {(form.images || []).map((img, i) => (
+                        <div key={i} className="relative group">
+                          <div className="aspect-square bg-gray-800 border border-gray-700 rounded-lg overflow-hidden">
+                            <img 
+                              src={img} 
+                              alt={`Product image ${i + 1}`}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMzc0MTUxIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzlDQTNBRiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlPC90ZXh0Pjwvc3ZnPg==';
+                              }}
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeImage(i)}
+                            className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            ×
+                          </button>
+                          <p className="text-xs text-gray-400 mt-1 truncate">Image {i + 1}</p>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
 
