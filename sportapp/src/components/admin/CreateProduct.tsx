@@ -1,7 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Button } from '../ui/button';
 import { productService } from '../../services/productService';
+import { CategoryService } from '../../services/categoryService';
 import type { Product } from '../../types/product';
+import type { Category } from '../../types/category';
 
 interface CreateProductProps {
   onCancel?: () => void;
@@ -16,8 +18,7 @@ const emptyProduct: Partial<Product> = {
 };
 
 const CreateProduct: React.FC<CreateProductProps> = ({ onCancel, onCreated }) => {
-  const categories = productService.getCategories();
-
+  const [categories, setCategories] = useState<Category[]>([]);
   const [form, setForm] = useState<Partial<Product>>({ ...emptyProduct });
   const [imageInput, setImageInput] = useState('');
   const [featureInput, setFeatureInput] = useState('');
@@ -27,6 +28,31 @@ const CreateProduct: React.FC<CreateProductProps> = ({ onCancel, onCreated }) =>
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Load categories from API
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const data = await CategoryService.getCategories();
+        setCategories(data);
+      } catch (error) {
+        console.error('Error loading categories:', error);
+        // Fallback to local categories if API fails - convert ProductCategory to Category
+        const localCategories = productService.getCategories();
+        const convertedCategories: Category[] = localCategories.map(cat => ({
+          id: cat.id,
+          name: cat.name,
+          description: cat.description,
+          image: cat.image,
+          isActive: true, // Default to active
+          sortOrder: 0, // Default sort order
+        }));
+        setCategories(convertedCategories);
+      }
+    };
+
+    loadCategories();
+  }, []);
 
   const subcategories = useMemo(() => {
     return form.category ? productService.getSubcategories(form.category) : [];
@@ -386,5 +412,3 @@ const CreateProduct: React.FC<CreateProductProps> = ({ onCancel, onCreated }) =>
 };
 
 export default CreateProduct;
-
-
