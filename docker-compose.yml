@@ -3,15 +3,23 @@ version: "3.9"
 services:
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
+    platform: linux/amd64          # important on Apple Silicon
     container_name: cdu_sqlserver
     environment:
       - ACCEPT_EULA=Y
       - MSSQL_SA_PASSWORD=${MSSQL_SA_PASSWORD:-Your_strong_password123}
       - MSSQL_PID=Developer
     ports:
-      - "1433:1433"
+      - "1435:1433"                # avoid the 1433 conflict on host
     volumes:
       - sql_data:/var/opt/mssql
+    # Don't rely on sqlcmd (not installed). Just check TCP port is open.
+    healthcheck:
+      test: ["CMD-SHELL", "bash -lc 'echo > /dev/tcp/127.0.0.1/1433'"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
 
   api:
     build:
@@ -21,12 +29,14 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
+      # inside the compose network, use the service name + container port
       - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=sportappDb;User Id=sa;Password=${MSSQL_SA_PASSWORD:-Your_strong_password123};TrustServerCertificate=True;Encrypt=True
       - JWT__Issuer=${JWT_ISSUER:-cdu.local}
       - JWT__Audience=${JWT_AUDIENCE:-cdu.local}
       - JWT__Key=${JWT_KEY:-supersecret_dev_key_change}
     depends_on:
-      - sqlserver
+      sqlserver:
+        condition: service_healthy
     ports:
       - "8080:8080"
 
