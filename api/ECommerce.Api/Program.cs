@@ -6,33 +6,43 @@ using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+// OpenAPI/Swagger
 builder.Services.AddOpenApi();
-
-// Add Swagger generation for UI
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// CORS for local frontends
+// ⭐ CHANGED: CORS policy that exactly allows your Vite dev ports (5173/5174/…)
+// and supports credentials. Keep this list in sync with your frontend ports.
 const string DevCorsPolicy = "DevCors";
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(DevCorsPolicy, policy =>
     {
-        policy.WithOrigins("http://localhost:5173", "http://localhost:5174")
-              .AllowAnyHeader()
-              .AllowAnyMethod();
+        policy.WithOrigins(
+                "http://localhost:5173",
+                
+                "http://localhost:5174",
+                
+                "http://localhost:5175",
+                
+                "http://localhost:5176"
+                
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
 
-// Configure EF Core SQL Server
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+// ⭐ CHANGED: default connection string set to the docker-compose service name `sqlserver`
+// and your actual DB name `sportappDb`. Env/Config still take precedence.
+var connectionString =
+    builder.Configuration.GetConnectionString("DefaultConnection")
     ?? builder.Configuration["ConnectionStrings:DefaultConnection"]
     ?? Environment.GetEnvironmentVariable("CONNECTION_STRING")
-    ?? "Server=host.docker.internal,1433;Database=SportStoreDb;Trusted_Connection=False;MultipleActiveResultSets=true;TrustServerCertificate=True;Encrypt=True;User Id=sa;Password=Your_strong_password123";
+    ?? "Server=sqlserver,1433;Database=sportappDb;User Id=sa;Password=Your_strong_password123;TrustServerCertificate=True;Encrypt=True";
 
-// Only add SQL Server DbContext and FluentMigrator if not in testing environment
+// Only add DbContext/Migrator outside tests
 if (!builder.Environment.IsEnvironment("Testing"))
 {
     builder.Services.AddDbContext<AppDbContext>(options =>
@@ -40,7 +50,6 @@ if (!builder.Environment.IsEnvironment("Testing"))
         options.UseSqlServer(connectionString);
     });
 
-    // Add FluentMigrator services
     builder.Services
         .AddFluentMigratorCore()
         .ConfigureRunner(rb => rb
@@ -52,61 +61,52 @@ if (!builder.Environment.IsEnvironment("Testing"))
 
 var app = builder.Build();
 
-// Run FluentMigrator migrations (skip in testing environment)
+// Run migrations (skip during tests)
 if (!app.Environment.IsEnvironment("Testing"))
 {
-    using (var scope = app.Services.CreateScope())
+    using var scope = app.Services.CreateScope();
+    try
     {
-        try
-        {
-            var runner = scope.ServiceProvider.GetRequiredService<IMigrationRunner>();
-            var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-            
-            logger.LogInformation("Starting database migrations...");
-            
-            // Run migrations
-            runner.MigrateUp();
-            
-            logger.LogInformation("Database migrations completed successfully.");
-        }
-        catch (Exception ex)
-        {
-            var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-            logger.LogError(ex, "An error occurred while running database migrations.");
-            
-            // Don't fail the application startup for migration errors in development
-            if (!app.Environment.IsDevelopment())
-            {
-                throw;
-            }
-            
-            logger.LogWarning("Continuing application startup despite migration errors (Development mode).");
-        }
+        var runner = scope.ServiceProvider.GetRequiredService<IMigrationRunner>();
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        logger.LogInformation("Starting database migrations...");
+        runner.MigrateUp();
+        logger.LogInformation("Database migrations completed successfully.");
+    }
+    catch (Exception ex)
+    {
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while running database migrations.");
+        if (!app.Environment.IsDevelopment())
+            throw;
+
+        logger.LogWarning("Continuing application startup despite migration errors (Development mode).");
     }
 }
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
-
-// Enable Swagger middleware and UI
+// Swagger
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// Apply CORS before endpoints
+// ⭐ CHANGED: Use CORS early, before mapping endpoints
 app.UseCors(DevCorsPolicy);
 
-// Redirect root to Swagger UI for a friendly landing page
+// ⭐ CHANGED: (Dev) DO NOT force HTTPS redirection to avoid http→https redirects
+// if (!app.Environment.IsDevelopment()) app.UseHttpsRedirection();
+
+// ⭐ CHANGED: Accept preflight for any API path so browsers don't fail OPTIONS with 404.
+// CORS middleware will add the right headers.
+app.MapMethods("/api/{**any}", new[] { "OPTIONS" }, () => Results.Ok())
+   .RequireCors(DevCorsPolicy);
+
+// Friendly landing
 app.MapGet("/", () => Results.Redirect("/swagger"));
 
-// Auth endpoints
-app.MapAuthEndpoints();
+// Minimal API endpoints
+app.MapAuthEndpoints();       // /api/auth/register, /api/auth/login
+app.MapCategoryEndpoints();   // your category endpoints
 
-// Category endpoints
-app.MapCategoryEndpoints();
-
+// Sample
 var summaries = new[]
 {
     "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
@@ -114,7 +114,7 @@ var summaries = new[]
 
 app.MapGet("/weatherforecast", () =>
 {
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
+    var forecast = Enumerable.Range(1, 5).Select(index =>
         new WeatherForecast
         (
             DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
