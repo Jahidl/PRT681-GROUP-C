@@ -14,10 +14,11 @@ import { productService } from '../../services/productService';
 import CreateProduct from './CreateProduct';
 import CreateCategory from './CreateCategory';
 import CsvUpload from './CsvUpload';
+import JobDashboard from './JobDashboard';
 import CategoryManagement from '../CategoryManagement';
 import ProductManagement from '../ProductManagement';
 
-type AdminView = 'dashboard' | 'products' | 'categories' | 'users' | 'orders' | 'create-product' | 'create-category' | 'csv-upload';
+type AdminView = 'dashboard' | 'products' | 'categories' | 'users' | 'orders' | 'create-product' | 'create-category' | 'csv-upload' | 'jobs';
 
 const AdminDashboard: React.FC = () => {
   const [currentView, setCurrentView] = useState<AdminView>('dashboard');
@@ -118,6 +119,19 @@ const AdminDashboard: React.FC = () => {
           >
             <ShoppingCart className="h-5 w-5" />
             {!sidebarCollapsed && <span>Orders</span>}
+          </button>
+          
+          <button
+            onClick={() => setCurrentView('jobs')}
+            className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center px-2' : 'space-x-3 px-4'} py-3 rounded-lg text-left transition-colors ${
+              currentView === 'jobs' 
+                ? 'bg-orange-500 text-white' 
+                : 'text-gray-300 hover:text-white hover:bg-gray-800'
+            }`}
+            title={sidebarCollapsed ? 'Jobs' : ''}
+          >
+            <TrendingUp className="h-5 w-5" />
+            {!sidebarCollapsed && <span>Jobs</span>}
           </button>
         </nav>
       </div>
@@ -266,6 +280,12 @@ const AdminDashboard: React.FC = () => {
           <CsvUpload 
             onCancel={() => setCurrentView('products')}
             onUploaded={() => setCurrentView('products')}
+          />
+        );
+      case 'jobs':
+        return (
+          <JobDashboard 
+            onClose={() => setCurrentView('dashboard')}
           />
         );
       default:

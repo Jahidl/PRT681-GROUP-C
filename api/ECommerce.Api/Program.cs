@@ -23,6 +23,12 @@ builder.Services.Configure<RabbitMQSettings>(
 // Register RabbitMQ service
 builder.Services.AddSingleton<IRabbitMQService, RabbitMQService>();
 
+// Register CSV processing service
+builder.Services.AddScoped<ICsvProcessingService, CsvProcessingService>();
+
+// Register background worker
+builder.Services.AddHostedService<CsvProcessingWorker>();
+
 // CORS for local frontends
 const string DevCorsPolicy = "DevCors";
 builder.Services.AddCors(options =>

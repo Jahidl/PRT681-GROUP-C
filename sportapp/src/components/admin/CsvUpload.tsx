@@ -1,6 +1,7 @@
-import React, { useState, useRef } from 'react';
-import { Upload, Download, AlertCircle, CheckCircle, X, FileText } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Upload, Download, AlertCircle, CheckCircle, X, FileText, Clock, Loader2 } from 'lucide-react';
 import { Button } from '../ui/button';
+import { JobService, type JobStatus } from '../../services/jobService';
 
 // Toast notification component
 interface ToastProps {
@@ -41,7 +42,7 @@ interface CsvUploadResult {
   successfulRows: number;
   failedRows: number;
   errors: string[];
-  createdProducts: any[];
+  createdProducts: unknown[];
   createdCategories: string[];
   createdSubcategories: string[];
 }
@@ -57,7 +58,9 @@ const CsvUpload: React.FC<CsvUploadProps> = ({ onCancel, onUploaded }) => {
   const [result, setResult] = useState<CsvUploadResult | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const [currentJob, setCurrentJob] = useState<JobStatus | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const stopPollingRef = useRef<(() => void) | null>(null);
 
   const showToast = (message: string, type: 'success' | 'error' | 'info') => {
     setToast({ message, type });
@@ -106,35 +109,72 @@ const CsvUpload: React.FC<CsvUploadProps> = ({ onCancel, onUploaded }) => {
     if (!file) return;
 
     setUploading(true);
-    const formData = new FormData();
-    formData.append('file', file);
+    setResult(null);
+    setCurrentJob(null);
 
     try {
-      const response = await fetch('http://localhost:8080/api/products/upload-csv', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (response.ok) {
-        const uploadResult: CsvUploadResult = await response.json();
-        setResult(uploadResult);
-        if (uploadResult.successfulRows > 0) {
-          showToast(`Successfully uploaded ${uploadResult.successfulRows} product${uploadResult.successfulRows !== 1 ? 's' : ''}!`, 'success');
-          onUploaded();
-        } else if (uploadResult.failedRows > 0) {
-          showToast(`Upload completed with ${uploadResult.failedRows} failed row${uploadResult.failedRows !== 1 ? 's' : ''}. Check the results below.`, 'error');
+      // Read file content
+      const fileContent = await file.text();
+      
+      // Create job using the new API
+      const jobResponse = await JobService.createJob(file.name, fileContent, file.size);
+      
+      showToast('CSV upload queued for processing. Tracking progress...', 'info');
+      
+      // Start polling for job status
+      const stopPolling = await JobService.pollJobStatus(
+        jobResponse.jobId,
+        (job) => {
+          setCurrentJob(job);
+          // Update progress in real-time
+        },
+        (completedJob) => {
+          setCurrentJob(completedJob);
+          
+          // Convert job result to legacy format for display
+          const legacyResult: CsvUploadResult = {
+            totalRows: completedJob.totalRows,
+            successfulRows: completedJob.successfulRows,
+            failedRows: completedJob.failedRows,
+            errors: completedJob.errors,
+            createdProducts: completedJob.createdProducts,
+            createdCategories: completedJob.createdCategories,
+            createdSubcategories: completedJob.createdSubcategories,
+          };
+          setResult(legacyResult);
+          
+          if (completedJob.status === 'Completed' && completedJob.successfulRows > 0) {
+            showToast(`Successfully processed ${completedJob.successfulRows} product${completedJob.successfulRows !== 1 ? 's' : ''}!`, 'success');
+            onUploaded();
+          } else if (completedJob.status === 'Failed') {
+            showToast(`Processing failed: ${completedJob.errorMessage || 'Unknown error'}`, 'error');
+          } else if (completedJob.failedRows > 0) {
+            showToast(`Processing completed with ${completedJob.failedRows} failed row${completedJob.failedRows !== 1 ? 's' : ''}. Check the results below.`, 'error');
+          }
+        },
+        (error) => {
+          showToast(`Error tracking job: ${error.message}`, 'error');
         }
-      } else {
-        const error = await response.json();
-        showToast(`Upload failed: ${error.message}`, 'error');
-      }
+      );
+      
+      stopPollingRef.current = stopPolling;
+      
     } catch (error) {
       console.error('Upload error:', error);
-      showToast('Upload failed. Please try again.', 'error');
+      showToast(`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
     } finally {
       setUploading(false);
     }
   };
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (stopPollingRef.current) {
+        stopPollingRef.current();
+      }
+    };
+  }, []);
 
   const downloadTemplate = () => {
     const headers = [
@@ -298,6 +338,72 @@ const CsvUpload: React.FC<CsvUploadProps> = ({ onCancel, onUploaded }) => {
             </div>
           )}
         </div>
+
+        {/* Job Progress */}
+        {currentJob && (
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-6">
+            <h3 className="text-lg font-semibold text-white mb-4">Processing Status</h3>
+            
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-300">Job ID:</span>
+                <span className="text-white font-mono text-sm">{currentJob.id}</span>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <span className="text-gray-300">Status:</span>
+                <div className="flex items-center">
+                  {currentJob.status === 'Processing' && (
+                    <Loader2 className="h-4 w-4 text-blue-500 animate-spin mr-2" />
+                  )}
+                  {currentJob.status === 'Queued' && (
+                    <Clock className="h-4 w-4 text-yellow-500 mr-2" />
+                  )}
+                  {currentJob.status === 'Completed' && (
+                    <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                  )}
+                  {currentJob.status === 'Failed' && (
+                    <AlertCircle className="h-4 w-4 text-red-500 mr-2" />
+                  )}
+                  <span className={`font-medium ${
+                    currentJob.status === 'Processing' ? 'text-blue-400' :
+                    currentJob.status === 'Queued' ? 'text-yellow-400' :
+                    currentJob.status === 'Completed' ? 'text-green-400' :
+                    currentJob.status === 'Failed' ? 'text-red-400' :
+                    'text-gray-400'
+                  }`}>
+                    {currentJob.statusText}
+                  </span>
+                </div>
+              </div>
+
+              {currentJob.totalRows > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-300">Progress</span>
+                    <span className="text-white">{currentJob.progressPercentage}%</span>
+                  </div>
+                  <div className="w-full bg-gray-700 rounded-full h-2">
+                    <div 
+                      className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${currentJob.progressPercentage}%` }}
+                    ></div>
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-400">
+                    <span>Processed: {currentJob.processedRows}/{currentJob.totalRows}</span>
+                    <span>Success: {currentJob.successfulRows} | Failed: {currentJob.failedRows}</span>
+                  </div>
+                </div>
+              )}
+
+              {currentJob.errorMessage && (
+                <div className="bg-red-900/20 border border-red-800 rounded-lg p-3">
+                  <p className="text-red-300 text-sm">{currentJob.errorMessage}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Results */}
         {result && (

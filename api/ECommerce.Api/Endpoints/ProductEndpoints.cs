@@ -1,6 +1,7 @@
 using ECommerce.Api.Data;
 using ECommerce.Api.DTOs;
 using ECommerce.Api.Models;
+using ECommerce.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
@@ -335,8 +336,8 @@ namespace ECommerce.Api.Endpoints
             .WithName("DeleteProduct")
             .WithOpenApi();
 
-            // POST upload CSV
-            group.MapPost("/upload-csv", async (IFormFile file, AppDbContext db) =>
+            // POST upload CSV - Asynchronous with RabbitMQ
+            group.MapPost("/upload-csv", async (IFormFile file, IRabbitMQService rabbitMQ, AppDbContext db, ILogger<Program> logger) =>
             {
                 if (file == null || file.Length == 0)
                 {
@@ -348,276 +349,61 @@ namespace ECommerce.Api.Endpoints
                     return Results.BadRequest(new { message = "File must be a CSV file" });
                 }
 
-                var result = new CsvUploadResult();
-                var createdProducts = new List<ProductResponse>();
-                var createdCategories = new List<string>();
-                var createdSubcategories = new List<string>();
-                var errors = new List<string>();
-
                 try
                 {
+                    // Read CSV content
                     using var reader = new StreamReader(file.OpenReadStream());
                     var csvContent = await reader.ReadToEndAsync();
-                    var lines = csvContent.Split('\n', StringSplitOptions.RemoveEmptyEntries);
                     
+                    // Basic validation
+                    var lines = csvContent.Split('\n', StringSplitOptions.RemoveEmptyEntries);
                     if (lines.Length < 2)
                     {
                         return Results.BadRequest(new { message = "CSV file must contain at least a header row and one data row" });
                     }
 
-                    // Skip header row
-                    result.TotalRows = lines.Length - 1;
-
-                    // Get existing categories and subcategories for reference
-                    var categories = await db.Categories.ToDictionaryAsync(c => c.Id, c => c);
-                    var subcategories = await db.Subcategories.ToDictionaryAsync(s => s.Id, s => s);
-
-                    for (int i = 1; i < lines.Length; i++)
+                    // Create job record
+                    var job = new CsvUploadJob
                     {
-                        var line = lines[i].Trim();
-                        if (string.IsNullOrEmpty(line)) continue;
+                        Id = Guid.NewGuid().ToString(),
+                        FileName = file.FileName,
+                        Status = JobStatus.Queued,
+                        FileSizeBytes = file.Length,
+                        UploadedBy = "admin" // TODO: Get from authentication context
+                    };
 
-                        try
-                        {
-                            var csvRow = ParseCsvRow(line);
-                            
-                            // Validate required fields
-                            if (string.IsNullOrEmpty(csvRow.Id) || string.IsNullOrEmpty(csvRow.Name) || 
-                                string.IsNullOrEmpty(csvRow.CategoryId) || string.IsNullOrEmpty(csvRow.Brand))
-                            {
-                                errors.Add($"Row {i}: Missing required fields (Id, Name, CategoryId, Brand)");
-                                result.FailedRows++;
-                                continue;
-                            }
+                    db.CsvUploadJobs.Add(job);
+                    await db.SaveChangesAsync();
 
-                            // Check if product already exists
-                            var exists = await db.Products.AnyAsync(p => p.Id == csvRow.Id);
-                            if (exists)
-                            {
-                                errors.Add($"Row {i}: Product with ID '{csvRow.Id}' already exists");
-                                result.FailedRows++;
-                                continue;
-                            }
+                    // Create message for RabbitMQ
+                    var message = new CsvProcessingMessage
+                    {
+                        JobId = job.Id,
+                        FileName = file.FileName,
+                        CsvContent = csvContent,
+                        FileSizeBytes = file.Length,
+                        UploadedBy = "admin" // TODO: Get from authentication context
+                    };
 
-                            // Create category if it doesn't exist
-                            if (!categories.ContainsKey(csvRow.CategoryId))
-                            {
-                                var newCategory = new Category
-                                {
-                                    Id = csvRow.CategoryId,
-                                    Name = csvRow.CategoryId.Replace("-", " ").Replace("_", " "),
-                                    Description = $"Auto-created category for {csvRow.CategoryId}",
-                                    Image = "/categories/default-category.jpg",
-                                    IsActive = true,
-                                    SortOrder = 0
-                                };
-                                
-                                db.Categories.Add(newCategory);
-                                await db.SaveChangesAsync();
-                                categories[csvRow.CategoryId] = newCategory;
-                                createdCategories.Add(csvRow.CategoryId);
-                            }
+                    // Queue the job
+                    await rabbitMQ.PublishMessageAsync(message, "csv-processing-queue");
 
-                            // Create subcategory if provided and doesn't exist
-                            if (!string.IsNullOrEmpty(csvRow.SubcategoryId))
-                            {
-                                if (!subcategories.ContainsKey(csvRow.SubcategoryId))
-                                {
-                                    var newSubcategory = new Subcategory
-                                    {
-                                        Id = csvRow.SubcategoryId,
-                                        Name = csvRow.SubcategoryId.Replace("-", " ").Replace("_", " "),
-                                        Description = $"Auto-created subcategory for {csvRow.SubcategoryId}",
-                                        CategoryId = csvRow.CategoryId,
-                                        IsActive = true
-                                    };
-                                    
-                                    db.Subcategories.Add(newSubcategory);
-                                    await db.SaveChangesAsync();
-                                    subcategories[csvRow.SubcategoryId] = newSubcategory;
-                                    createdSubcategories.Add(csvRow.SubcategoryId);
-                                }
-                                else if (subcategories[csvRow.SubcategoryId].CategoryId != csvRow.CategoryId)
-                                {
-                                    errors.Add($"Row {i}: Subcategory '{csvRow.SubcategoryId}' already exists but belongs to a different category");
-                                    result.FailedRows++;
-                                    continue;
-                                }
-                            }
+                    logger.LogInformation("CSV processing job queued: {JobId}", job.Id);
 
-                            // Validate and parse JSON fields
-                            List<string> images, features, tags, sizes = null, colors = null;
-                            Dictionary<string, string> specifications;
+                    var response = new CreateJobResponse
+                    {
+                        JobId = job.Id,
+                        Message = "CSV upload job has been queued for processing. Use the job ID to track progress.",
+                        Status = job.Status,
+                        CreatedAtUtc = job.CreatedAtUtc
+                    };
 
-                            try
-                            {
-                                // Parse Images
-                                try
-                                {
-                                    images = string.IsNullOrEmpty(csvRow.Images) || csvRow.Images == "[]" 
-                                        ? new List<string>() 
-                                        : JsonSerializer.Deserialize<List<string>>(csvRow.Images) ?? new List<string>();
-                                }
-                                catch (JsonException ex)
-                                {
-                                    errors.Add($"Row {i}: Invalid JSON format in Images field: {ex.Message}");
-                                    result.FailedRows++;
-                                    continue;
-                                }
-
-                                // Parse Features
-                                try
-                                {
-                                    features = string.IsNullOrEmpty(csvRow.Features) || csvRow.Features == "[]" 
-                                        ? new List<string>() 
-                                        : JsonSerializer.Deserialize<List<string>>(csvRow.Features) ?? new List<string>();
-                                }
-                                catch (JsonException ex)
-                                {
-                                    errors.Add($"Row {i}: Invalid JSON format in Features field: {ex.Message}");
-                                    result.FailedRows++;
-                                    continue;
-                                }
-
-                                // Parse Specifications
-                                try
-                                {
-                                    specifications = string.IsNullOrEmpty(csvRow.Specifications) || csvRow.Specifications == "{}" 
-                                        ? new Dictionary<string, string>() 
-                                        : JsonSerializer.Deserialize<Dictionary<string, string>>(csvRow.Specifications) ?? new Dictionary<string, string>();
-                                }
-                                catch (JsonException ex)
-                                {
-                                    errors.Add($"Row {i}: Invalid JSON format in Specifications field: {ex.Message}");
-                                    result.FailedRows++;
-                                    continue;
-                                }
-
-                                // Parse Tags
-                                try
-                                {
-                                    tags = string.IsNullOrEmpty(csvRow.Tags) || csvRow.Tags == "[]" 
-                                        ? new List<string>() 
-                                        : JsonSerializer.Deserialize<List<string>>(csvRow.Tags) ?? new List<string>();
-                                }
-                                catch (JsonException ex)
-                                {
-                                    errors.Add($"Row {i}: Invalid JSON format in Tags field: {ex.Message}");
-                                    result.FailedRows++;
-                                    continue;
-                                }
-
-                                // Parse Sizes (optional)
-                                if (!string.IsNullOrEmpty(csvRow.Sizes) && csvRow.Sizes != "[]")
-                                {
-                                    try
-                                    {
-                                        sizes = JsonSerializer.Deserialize<List<string>>(csvRow.Sizes);
-                                    }
-                                    catch (JsonException ex)
-                                    {
-                                        errors.Add($"Row {i}: Invalid JSON format in Sizes field: {ex.Message}");
-                                        result.FailedRows++;
-                                        continue;
-                                    }
-                                }
-
-                                // Parse Colors (optional)
-                                if (!string.IsNullOrEmpty(csvRow.Colors) && csvRow.Colors != "[]")
-                                {
-                                    try
-                                    {
-                                        colors = JsonSerializer.Deserialize<List<string>>(csvRow.Colors);
-                                    }
-                                    catch (JsonException ex)
-                                    {
-                                        errors.Add($"Row {i}: Invalid JSON format in Colors field: {ex.Message}");
-                                        result.FailedRows++;
-                                        continue;
-                                    }
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                errors.Add($"Row {i}: Error processing JSON fields: {ex.Message}");
-                                result.FailedRows++;
-                                continue;
-                            }
-
-                            // Create product
-                            var product = new Product
-                            {
-                                Id = csvRow.Id.Trim(),
-                                Name = csvRow.Name.Trim(),
-                                Description = csvRow.Description.Trim(),
-                                Price = csvRow.Price,
-                                OriginalPrice = csvRow.OriginalPrice,
-                                CategoryId = csvRow.CategoryId.Trim(),
-                                SubcategoryId = string.IsNullOrEmpty(csvRow.SubcategoryId) ? null : csvRow.SubcategoryId.Trim(),
-                                Brand = csvRow.Brand.Trim(),
-                                Rating = csvRow.Rating,
-                                ReviewCount = csvRow.ReviewCount,
-                                InStock = csvRow.InStock,
-                                StockCount = csvRow.StockCount,
-                                Images = JsonSerializer.Serialize(images),
-                                Features = JsonSerializer.Serialize(features),
-                                Specifications = JsonSerializer.Serialize(specifications),
-                                Tags = JsonSerializer.Serialize(tags),
-                                Sizes = sizes != null ? JsonSerializer.Serialize(sizes) : null,
-                                Colors = colors != null ? JsonSerializer.Serialize(colors) : null,
-                                IsActive = csvRow.IsActive
-                            };
-
-                            db.Products.Add(product);
-                            await db.SaveChangesAsync();
-
-                            var productResponse = new ProductResponse
-                            {
-                                Id = product.Id,
-                                Name = product.Name,
-                                Description = product.Description,
-                                Price = product.Price,
-                                OriginalPrice = product.OriginalPrice,
-                                CategoryId = product.CategoryId,
-                                SubcategoryId = product.SubcategoryId,
-                                Brand = product.Brand,
-                                Rating = product.Rating,
-                                ReviewCount = product.ReviewCount,
-                                InStock = product.InStock,
-                                StockCount = product.StockCount,
-                                Images = images,
-                                Features = features,
-                                Specifications = specifications,
-                                Tags = tags,
-                                Sizes = sizes,
-                                Colors = colors,
-                                CreatedAtUtc = product.CreatedAtUtc,
-                                UpdatedAtUtc = product.UpdatedAtUtc,
-                                IsActive = product.IsActive,
-                                CategoryName = categories[product.CategoryId].Name,
-                                SubcategoryName = product.SubcategoryId != null ? subcategories[product.SubcategoryId].Name : null
-                            };
-
-                            createdProducts.Add(productResponse);
-                            result.SuccessfulRows++;
-                        }
-                        catch (Exception ex)
-                        {
-                            errors.Add($"Row {i}: {ex.Message}");
-                            result.FailedRows++;
-                        }
-                    }
-
-                    result.Errors = errors;
-                    result.CreatedProducts = createdProducts;
-                    result.CreatedCategories = createdCategories.Distinct().ToList();
-                    result.CreatedSubcategories = createdSubcategories.Distinct().ToList();
-
-                    return Results.Ok(result);
+                    return Results.Ok(response);
                 }
                 catch (Exception ex)
                 {
-                    return Results.BadRequest(new { message = $"Error processing CSV file: {ex.Message}" });
+                    logger.LogError(ex, "Failed to queue CSV processing job");
+                    return Results.BadRequest(new { message = "Failed to queue job for processing" });
                 }
             })
             .WithName("UploadProductsCsv")
@@ -625,96 +411,6 @@ namespace ECommerce.Api.Endpoints
             .DisableAntiforgery();
 
             return routes;
-        }
-
-        private static CsvProductRow ParseCsvRow(string csvLine)
-        {
-            var values = new List<string>();
-            var currentValue = new StringBuilder();
-            bool inQuotes = false;
-            bool escapeNext = false;
-
-            for (int i = 0; i < csvLine.Length; i++)
-            {
-                char c = csvLine[i];
-
-                if (escapeNext)
-                {
-                    currentValue.Append(c);
-                    escapeNext = false;
-                }
-                else if (c == '\\')
-                {
-                    escapeNext = true;
-                }
-                else if (c == '"')
-                {
-                    if (inQuotes && i + 1 < csvLine.Length && csvLine[i + 1] == '"')
-                    {
-                        // Handle escaped quotes ("")
-                        currentValue.Append('"');
-                        i++; // Skip the next quote
-                    }
-                    else
-                    {
-                        inQuotes = !inQuotes;
-                    }
-                }
-                else if (c == ',' && !inQuotes)
-                {
-                    values.Add(currentValue.ToString());
-                    currentValue.Clear();
-                }
-                else
-                {
-                    currentValue.Append(c);
-                }
-            }
-
-            // Add the last value
-            values.Add(currentValue.ToString());
-
-            // Ensure we have enough values (pad with empty strings if needed)
-            while (values.Count < 19)
-            {
-                values.Add("");
-            }
-
-            // Clean up the values by removing surrounding quotes and trimming
-            for (int i = 0; i < values.Count; i++)
-            {
-                var value = values[i].Trim();
-                if (value.StartsWith('"') && value.EndsWith('"') && value.Length > 1)
-                {
-                    value = value.Substring(1, value.Length - 2);
-                    // Unescape double quotes
-                    value = value.Replace("\"\"", "\"");
-                }
-                values[i] = value;
-            }
-
-            return new CsvProductRow
-            {
-                Id = values[0],
-                Name = values[1],
-                Description = values[2],
-                Price = decimal.TryParse(values[3], out var price) ? price : 0,
-                OriginalPrice = decimal.TryParse(values[4], out var originalPrice) ? originalPrice : null,
-                CategoryId = values[5],
-                SubcategoryId = string.IsNullOrEmpty(values[6]) ? null : values[6],
-                Brand = values[7],
-                Rating = double.TryParse(values[8], out var rating) ? rating : 0,
-                ReviewCount = int.TryParse(values[9], out var reviewCount) ? reviewCount : 0,
-                InStock = bool.TryParse(values[10], out var inStock) ? inStock : true,
-                StockCount = int.TryParse(values[11], out var stockCount) ? stockCount : 0,
-                Images = string.IsNullOrEmpty(values[12]) ? "[]" : values[12],
-                Features = string.IsNullOrEmpty(values[13]) ? "[]" : values[13],
-                Specifications = string.IsNullOrEmpty(values[14]) ? "{}" : values[14],
-                Tags = string.IsNullOrEmpty(values[15]) ? "[]" : values[15],
-                Sizes = string.IsNullOrEmpty(values[16]) ? null : values[16],
-                Colors = string.IsNullOrEmpty(values[17]) ? null : values[17],
-                IsActive = bool.TryParse(values[18], out var isActive) ? isActive : true
-            };
         }
     }
 }
