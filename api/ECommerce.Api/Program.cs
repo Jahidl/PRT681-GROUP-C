@@ -1,5 +1,7 @@
 using ECommerce.Api.Data;
 using ECommerce.Api.Endpoints;
+using ECommerce.Api.Configuration;
+using ECommerce.Api.Services;
 using Microsoft.EntityFrameworkCore;
 using FluentMigrator.Runner;
 using System.Reflection;
@@ -13,6 +15,13 @@ builder.Services.AddOpenApi();
 // Add Swagger generation for UI
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// Configure RabbitMQ
+builder.Services.Configure<RabbitMQSettings>(
+    builder.Configuration.GetSection(RabbitMQSettings.SectionName));
+
+// Register RabbitMQ service
+builder.Services.AddSingleton<IRabbitMQService, RabbitMQService>();
 
 // CORS for local frontends
 const string DevCorsPolicy = "DevCors";
@@ -109,6 +118,9 @@ app.MapCategoryEndpoints();
 
 // Product endpoints
 app.MapProductEndpoints();
+
+// Job endpoints
+app.MapJobEndpoints();
 
 var summaries = new[]
 {

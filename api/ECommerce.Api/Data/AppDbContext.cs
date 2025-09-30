@@ -13,6 +13,7 @@ namespace ECommerce.Api.Data
         public DbSet<Category> Categories => Set<Category>();
         public DbSet<Subcategory> Subcategories => Set<Subcategory>();
         public DbSet<Product> Products => Set<Product>();
+        public DbSet<CsvUploadJob> CsvUploadJobs => Set<CsvUploadJob>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
