@@ -16,38 +16,65 @@ namespace ECommerce.Api.Endpoints
             // GET all products
             group.MapGet("/", async (AppDbContext db) =>
             {
-                var products = await db.Products
+                var productsData = await db.Products
                     .Include(p => p.Category)
                     .Include(p => p.Subcategory)
                     .Where(p => p.IsActive)
                     .OrderBy(p => p.Name)
-                    .Select(p => new ProductResponse
+                    .Select(p => new
                     {
-                        Id = p.Id,
-                        Name = p.Name,
-                        Description = p.Description,
-                        Price = p.Price,
-                        OriginalPrice = p.OriginalPrice,
-                        CategoryId = p.CategoryId,
-                        SubcategoryId = p.SubcategoryId,
-                        Brand = p.Brand,
-                        Rating = p.Rating,
-                        ReviewCount = p.ReviewCount,
-                        InStock = p.InStock,
-                        StockCount = p.StockCount,
-                        Images = JsonSerializer.Deserialize<List<string>>(p.Images) ?? new List<string>(),
-                        Features = JsonSerializer.Deserialize<List<string>>(p.Features) ?? new List<string>(),
-                        Specifications = JsonSerializer.Deserialize<Dictionary<string, string>>(p.Specifications) ?? new Dictionary<string, string>(),
-                        Tags = JsonSerializer.Deserialize<List<string>>(p.Tags) ?? new List<string>(),
-                        Sizes = string.IsNullOrEmpty(p.Sizes) ? null : JsonSerializer.Deserialize<List<string>>(p.Sizes),
-                        Colors = string.IsNullOrEmpty(p.Colors) ? null : JsonSerializer.Deserialize<List<string>>(p.Colors),
-                        CreatedAtUtc = p.CreatedAtUtc,
-                        UpdatedAtUtc = p.UpdatedAtUtc,
-                        IsActive = p.IsActive,
+                        p.Id,
+                        p.Name,
+                        p.Description,
+                        p.Price,
+                        p.OriginalPrice,
+                        p.CategoryId,
+                        p.SubcategoryId,
+                        p.Brand,
+                        p.Rating,
+                        p.ReviewCount,
+                        p.InStock,
+                        p.StockCount,
+                        p.Images,
+                        p.Features,
+                        p.Specifications,
+                        p.Tags,
+                        p.Sizes,
+                        p.Colors,
+                        p.CreatedAtUtc,
+                        p.UpdatedAtUtc,
+                        p.IsActive,
                         CategoryName = p.Category != null ? p.Category.Name : null,
                         SubcategoryName = p.Subcategory != null ? p.Subcategory.Name : null
                     })
                     .ToListAsync();
+
+                var products = productsData.Select(p => new ProductResponse
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    Description = p.Description,
+                    Price = p.Price,
+                    OriginalPrice = p.OriginalPrice,
+                    CategoryId = p.CategoryId,
+                    SubcategoryId = p.SubcategoryId,
+                    Brand = p.Brand,
+                    Rating = p.Rating,
+                    ReviewCount = p.ReviewCount,
+                    InStock = p.InStock,
+                    StockCount = p.StockCount,
+                    Images = JsonSerializer.Deserialize<List<string>>(p.Images) ?? new List<string>(),
+                    Features = JsonSerializer.Deserialize<List<string>>(p.Features) ?? new List<string>(),
+                    Specifications = JsonSerializer.Deserialize<Dictionary<string, string>>(p.Specifications) ?? new Dictionary<string, string>(),
+                    Tags = JsonSerializer.Deserialize<List<string>>(p.Tags) ?? new List<string>(),
+                    Sizes = string.IsNullOrEmpty(p.Sizes) ? null : JsonSerializer.Deserialize<List<string>>(p.Sizes),
+                    Colors = string.IsNullOrEmpty(p.Colors) ? null : JsonSerializer.Deserialize<List<string>>(p.Colors),
+                    CreatedAtUtc = p.CreatedAtUtc,
+                    UpdatedAtUtc = p.UpdatedAtUtc,
+                    IsActive = p.IsActive,
+                    CategoryName = p.CategoryName,
+                    SubcategoryName = p.SubcategoryName
+                }).ToList();
 
                 return Results.Ok(products);
             })
@@ -57,42 +84,69 @@ namespace ECommerce.Api.Endpoints
             // GET product by ID
             group.MapGet("/{id}", async (string id, AppDbContext db) =>
             {
-                var product = await db.Products
+                var productData = await db.Products
                     .Include(p => p.Category)
                     .Include(p => p.Subcategory)
                     .Where(p => p.Id == id)
-                    .Select(p => new ProductResponse
+                    .Select(p => new
                     {
-                        Id = p.Id,
-                        Name = p.Name,
-                        Description = p.Description,
-                        Price = p.Price,
-                        OriginalPrice = p.OriginalPrice,
-                        CategoryId = p.CategoryId,
-                        SubcategoryId = p.SubcategoryId,
-                        Brand = p.Brand,
-                        Rating = p.Rating,
-                        ReviewCount = p.ReviewCount,
-                        InStock = p.InStock,
-                        StockCount = p.StockCount,
-                        Images = JsonSerializer.Deserialize<List<string>>(p.Images) ?? new List<string>(),
-                        Features = JsonSerializer.Deserialize<List<string>>(p.Features) ?? new List<string>(),
-                        Specifications = JsonSerializer.Deserialize<Dictionary<string, string>>(p.Specifications) ?? new Dictionary<string, string>(),
-                        Tags = JsonSerializer.Deserialize<List<string>>(p.Tags) ?? new List<string>(),
-                        Sizes = string.IsNullOrEmpty(p.Sizes) ? null : JsonSerializer.Deserialize<List<string>>(p.Sizes),
-                        Colors = string.IsNullOrEmpty(p.Colors) ? null : JsonSerializer.Deserialize<List<string>>(p.Colors),
-                        CreatedAtUtc = p.CreatedAtUtc,
-                        UpdatedAtUtc = p.UpdatedAtUtc,
-                        IsActive = p.IsActive,
+                        p.Id,
+                        p.Name,
+                        p.Description,
+                        p.Price,
+                        p.OriginalPrice,
+                        p.CategoryId,
+                        p.SubcategoryId,
+                        p.Brand,
+                        p.Rating,
+                        p.ReviewCount,
+                        p.InStock,
+                        p.StockCount,
+                        p.Images,
+                        p.Features,
+                        p.Specifications,
+                        p.Tags,
+                        p.Sizes,
+                        p.Colors,
+                        p.CreatedAtUtc,
+                        p.UpdatedAtUtc,
+                        p.IsActive,
                         CategoryName = p.Category != null ? p.Category.Name : null,
                         SubcategoryName = p.Subcategory != null ? p.Subcategory.Name : null
                     })
                     .FirstOrDefaultAsync();
 
-                if (product == null)
+                if (productData == null)
                 {
                     return Results.NotFound();
                 }
+
+                var product = new ProductResponse
+                {
+                    Id = productData.Id,
+                    Name = productData.Name,
+                    Description = productData.Description,
+                    Price = productData.Price,
+                    OriginalPrice = productData.OriginalPrice,
+                    CategoryId = productData.CategoryId,
+                    SubcategoryId = productData.SubcategoryId,
+                    Brand = productData.Brand,
+                    Rating = productData.Rating,
+                    ReviewCount = productData.ReviewCount,
+                    InStock = productData.InStock,
+                    StockCount = productData.StockCount,
+                    Images = JsonSerializer.Deserialize<List<string>>(productData.Images) ?? new List<string>(),
+                    Features = JsonSerializer.Deserialize<List<string>>(productData.Features) ?? new List<string>(),
+                    Specifications = JsonSerializer.Deserialize<Dictionary<string, string>>(productData.Specifications) ?? new Dictionary<string, string>(),
+                    Tags = JsonSerializer.Deserialize<List<string>>(productData.Tags) ?? new List<string>(),
+                    Sizes = string.IsNullOrEmpty(productData.Sizes) ? null : JsonSerializer.Deserialize<List<string>>(productData.Sizes),
+                    Colors = string.IsNullOrEmpty(productData.Colors) ? null : JsonSerializer.Deserialize<List<string>>(productData.Colors),
+                    CreatedAtUtc = productData.CreatedAtUtc,
+                    UpdatedAtUtc = productData.UpdatedAtUtc,
+                    IsActive = productData.IsActive,
+                    CategoryName = productData.CategoryName,
+                    SubcategoryName = productData.SubcategoryName
+                };
 
                 return Results.Ok(product);
             })
