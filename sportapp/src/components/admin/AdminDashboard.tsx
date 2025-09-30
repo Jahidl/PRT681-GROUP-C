@@ -46,14 +46,14 @@ const AdminDashboard: React.FC = () => {
     const loadStats = async () => {
       try {
         // Fetch real data from APIs
-        const [products, categories] = await Promise.all([
-          ApiProductService.getProducts(),
+        const [productsResult, categories] = await Promise.all([
+          ApiProductService.getProducts(1, 1000), // Get large page to get total count
           CategoryService.getCategories()
         ]);
 
         setStats(prevStats => ({
           ...prevStats,
-          totalProducts: products.length,
+          totalProducts: productsResult.pagination.totalCount,
           totalCategories: categories.length
         }));
       } catch (error) {
@@ -70,14 +70,14 @@ const AdminDashboard: React.FC = () => {
     if (currentView === 'dashboard') {
       const refreshStats = async () => {
         try {
-          const [products, categories] = await Promise.all([
-            ApiProductService.getProducts(),
+          const [productsResult, categories] = await Promise.all([
+            ApiProductService.getProducts(1, 1000), // Get large page to get total count
             CategoryService.getCategories()
           ]);
 
           setStats(prevStats => ({
             ...prevStats,
-            totalProducts: products.length,
+            totalProducts: productsResult.pagination.totalCount,
             totalCategories: categories.length
           }));
         } catch (error) {

@@ -16,14 +16,41 @@ namespace ECommerce.Api.Endpoints
         {
             var group = routes.MapGroup("/api/products");
 
-            // GET all products
-            group.MapGet("/", async (AppDbContext db) =>
+            // GET all products with pagination
+            group.MapGet("/", async (AppDbContext db, int page = 1, int pageSize = 20, string? search = null, string? categoryId = null) =>
             {
-                var productsData = await db.Products
+                // Validate pagination parameters
+                page = Math.Max(1, page);
+                pageSize = Math.Min(Math.Max(1, pageSize), 100); // Limit max page size to 100
+
+                var query = db.Products
                     .Include(p => p.Category)
                     .Include(p => p.Subcategory)
-                    .Where(p => p.IsActive)
+                    .Where(p => p.IsActive);
+
+                // Apply search filter
+                if (!string.IsNullOrEmpty(search))
+                {
+                    query = query.Where(p => p.Name.Contains(search) || 
+                                           p.Description.Contains(search) || 
+                                           p.Brand.Contains(search));
+                }
+
+                // Apply category filter
+                if (!string.IsNullOrEmpty(categoryId))
+                {
+                    query = query.Where(p => p.CategoryId == categoryId);
+                }
+
+                // Get total count for pagination
+                var totalCount = await query.CountAsync();
+                var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+
+                // Apply pagination and ordering
+                var productsData = await query
                     .OrderBy(p => p.Name)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
                     .Select(p => new
                     {
                         p.Id,
@@ -79,7 +106,21 @@ namespace ECommerce.Api.Endpoints
                     SubcategoryName = p.SubcategoryName
                 }).ToList();
 
-                return Results.Ok(products);
+                var response = new
+                {
+                    Products = products,
+                    Pagination = new
+                    {
+                        Page = page,
+                        PageSize = pageSize,
+                        TotalCount = totalCount,
+                        TotalPages = totalPages,
+                        HasNextPage = page < totalPages,
+                        HasPreviousPage = page > 1
+                    }
+                };
+
+                return Results.Ok(response);
             })
             .WithName("GetProducts")
             .WithOpenApi();

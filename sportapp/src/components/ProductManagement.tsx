@@ -44,7 +44,8 @@ const ProductManagement: React.FC = () => {
         // Try to load products first
         let productsData: Product[] = [];
         try {
-          productsData = await ApiProductService.getProducts();
+          const result = await ApiProductService.getAllProducts();
+          productsData = result;
           console.log('Products loaded:', productsData.length);
         } catch (productError: any) {
           console.error('Error loading products:', productError);
@@ -81,12 +82,13 @@ const ProductManagement: React.FC = () => {
     
     try {
       console.log('Refreshing products from API...');
-      const productsData = await ApiProductService.getProducts();
+      const productsData = await ApiProductService.getAllProducts();
       console.log('Products refreshed:', productsData.length);
       setProducts(productsData);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error refreshing products:', error);
-      setError(`Failed to refresh data: ${error?.message || 'Unknown error'}. Make sure the API server is running on http://localhost:8080`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setError(`Failed to refresh data: ${errorMessage}. Make sure the API server is running on http://localhost:8080`);
     } finally {
       setLoading(false);
     }

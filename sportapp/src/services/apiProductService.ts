@@ -73,20 +73,44 @@ export interface ProductResponse {
 }
 
 export class ApiProductService {
-  private static async handleResponse<T>(response: Response): Promise<T> {
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`HTTP ${response.status}: ${errorText}`);
-    }
-    return response.json();
-  }
+  static async getProducts(
+    page: number = 1,
+    pageSize: number = 20,
+    search?: string,
+    categoryId?: string
+  ): Promise<{
+    products: Product[];
+    pagination: {
+      page: number;
+      pageSize: number;
+      totalCount: number;
+      totalPages: number;
+      hasNextPage: boolean;
+      hasPreviousPage: boolean;
+    };
+  }> {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      pageSize: pageSize.toString(),
+    });
 
-  static async getProducts(): Promise<Product[]> {
-    const response = await fetch(`${API_BASE_URL}/api/products`);
-    const products = await this.handleResponse<ProductResponse[]>(response);
+    if (search) {
+      params.append("search", search);
+    }
+
+    if (categoryId) {
+      params.append("categoryId", categoryId);
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/products?${params}`);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
 
     // Convert API response to frontend Product type
-    return products.map((p) => ({
+    const products = data.products.map((p: any) => ({
       id: p.id,
       name: p.name,
       description: p.description,
@@ -106,6 +130,17 @@ export class ApiProductService {
       sizes: p.sizes ? this.parseJsonField(p.sizes, undefined) : undefined,
       colors: p.colors ? this.parseJsonField(p.colors, undefined) : undefined,
     }));
+
+    return {
+      products,
+      pagination: data.pagination,
+    };
+  }
+
+  // Keep the old method for backward compatibility
+  static async getAllProducts(): Promise<Product[]> {
+    const result = await this.getProducts(1, 1000); // Get a large page to simulate "all"
+    return result.products;
   }
 
   private static parseJsonField<T>(
@@ -116,7 +151,7 @@ export class ApiProductService {
 
     try {
       return JSON.parse(value);
-    } catch (error) {
+    } catch {
       console.warn(
         `Failed to parse JSON field: "${value}". Using fallback logic.`
       );
@@ -144,6 +179,14 @@ export class ApiProductService {
 
       return defaultValue;
     }
+  }
+
+  private static async handleResponse<T>(response: Response): Promise<T> {
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`HTTP ${response.status}: ${errorText}`);
+    }
+    return response.json();
   }
 
   static async getProductById(id: string): Promise<Product> {
