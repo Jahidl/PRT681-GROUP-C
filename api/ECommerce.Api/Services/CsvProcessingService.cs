@@ -281,78 +281,182 @@ namespace ECommerce.Api.Services
 
         private async Task EnsureCategoryExistsAsync(string categoryId, HashSet<string> createdCategories)
         {
-            var exists = await _dbContext.Categories.AnyAsync(c => c.Id == categoryId);
-            if (!exists)
+            try
             {
-                var category = new Category
+                var exists = await _dbContext.Categories.AnyAsync(c => c.Id == categoryId);
+                if (!exists)
                 {
-                    Id = categoryId,
-                    Name = categoryId.Replace("-", " ").Replace("_", " "),
-                    Description = $"Auto-created category: {categoryId}",
-                    Image = "",
-                    IsActive = true,
-                    SortOrder = 0
-                };
+                    var category = new Category
+                    {
+                        Id = categoryId,
+                        Name = categoryId.Replace("-", " ").Replace("_", " "),
+                        Description = $"Auto-created category: {categoryId}",
+                        Image = "",
+                        IsActive = true,
+                        SortOrder = 0
+                    };
 
-                _dbContext.Categories.Add(category);
-                await _dbContext.SaveChangesAsync();
-                createdCategories.Add(categoryId);
-                _logger.LogInformation("Created category: {CategoryId}", categoryId);
+                    _dbContext.Categories.Add(category);
+                    await _dbContext.SaveChangesAsync();
+                    createdCategories.Add(categoryId);
+                    _logger.LogInformation("Created category: {CategoryId}", categoryId);
+                }
+            }
+            catch (DbUpdateException ex)
+            {
+                // Handle database-specific errors for category creation
+                if (ex.InnerException?.Message.Contains("UNIQUE constraint failed") == true)
+                {
+                    // Category might have been created by another process, check again
+                    var exists = await _dbContext.Categories.AnyAsync(c => c.Id == categoryId);
+                    if (exists)
+                    {
+                        _logger.LogInformation("Category {CategoryId} already exists (created by another process)", categoryId);
+                        return; // Category exists, continue
+                    }
+                    throw new InvalidOperationException($"Failed to create category '{categoryId}': Category ID already exists");
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Database error while creating category '{categoryId}': {ex.InnerException?.Message ?? ex.Message}");
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Failed to create category '{categoryId}': {ex.Message}");
             }
         }
 
         private async Task EnsureSubcategoryExistsAsync(string subcategoryId, string categoryId, HashSet<string> createdSubcategories)
         {
-            var exists = await _dbContext.Subcategories.AnyAsync(s => s.Id == subcategoryId);
-            if (!exists)
+            try
             {
-                var subcategory = new Subcategory
+                var exists = await _dbContext.Subcategories.AnyAsync(s => s.Id == subcategoryId);
+                if (!exists)
                 {
-                    Id = subcategoryId,
-                    Name = subcategoryId.Replace("-", " ").Replace("_", " "),
-                    Description = $"Auto-created subcategory: {subcategoryId}",
-                    CategoryId = categoryId,
-                    IsActive = true,
-                    SortOrder = 0
-                };
+                    var subcategory = new Subcategory
+                    {
+                        Id = subcategoryId,
+                        Name = subcategoryId.Replace("-", " ").Replace("_", " "),
+                        Description = $"Auto-created subcategory: {subcategoryId}",
+                        CategoryId = categoryId,
+                        IsActive = true,
+                        SortOrder = 0
+                    };
 
-                _dbContext.Subcategories.Add(subcategory);
-                await _dbContext.SaveChangesAsync();
-                createdSubcategories.Add(subcategoryId);
-                _logger.LogInformation("Created subcategory: {SubcategoryId} under category: {CategoryId}", subcategoryId, categoryId);
+                    _dbContext.Subcategories.Add(subcategory);
+                    await _dbContext.SaveChangesAsync();
+                    createdSubcategories.Add(subcategoryId);
+                    _logger.LogInformation("Created subcategory: {SubcategoryId} under category: {CategoryId}", subcategoryId, categoryId);
+                }
+            }
+            catch (DbUpdateException ex)
+            {
+                // Handle database-specific errors for subcategory creation
+                if (ex.InnerException?.Message.Contains("UNIQUE constraint failed") == true)
+                {
+                    // Subcategory might have been created by another process, check again
+                    var exists = await _dbContext.Subcategories.AnyAsync(s => s.Id == subcategoryId);
+                    if (exists)
+                    {
+                        _logger.LogInformation("Subcategory {SubcategoryId} already exists (created by another process)", subcategoryId);
+                        return; // Subcategory exists, continue
+                    }
+                    throw new InvalidOperationException($"Failed to create subcategory '{subcategoryId}': Subcategory ID already exists");
+                }
+                else if (ex.InnerException?.Message.Contains("FOREIGN KEY constraint failed") == true)
+                {
+                    throw new InvalidOperationException($"Failed to create subcategory '{subcategoryId}': Invalid category reference '{categoryId}'. Please ensure the category exists");
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Database error while creating subcategory '{subcategoryId}': {ex.InnerException?.Message ?? ex.Message}");
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Failed to create subcategory '{subcategoryId}': {ex.Message}");
             }
         }
 
         private async Task<Product> CreateProductAsync(CreateProductRequest request)
         {
-            var product = new Product
+            try
             {
-                Id = request.Id,
-                Name = request.Name,
-                Description = request.Description,
-                Price = request.Price,
-                OriginalPrice = request.OriginalPrice,
-                CategoryId = request.CategoryId,
-                SubcategoryId = request.SubcategoryId,
-                Brand = request.Brand,
-                Rating = request.Rating,
-                ReviewCount = request.ReviewCount,
-                InStock = request.InStock,
-                StockCount = request.StockCount,
-                Images = JsonSerializer.Serialize(request.Images),
-                Features = JsonSerializer.Serialize(request.Features),
-                Specifications = JsonSerializer.Serialize(request.Specifications),
-                Tags = JsonSerializer.Serialize(request.Tags),
-                Sizes = request.Sizes != null ? JsonSerializer.Serialize(request.Sizes) : null,
-                Colors = request.Colors != null ? JsonSerializer.Serialize(request.Colors) : null,
-                CreatedAtUtc = DateTime.UtcNow,
-                IsActive = request.IsActive
-            };
+                // Check if product with same ID already exists
+                var existingProduct = await _dbContext.Products.FirstOrDefaultAsync(p => p.Id == request.Id);
+                if (existingProduct != null)
+                {
+                    throw new InvalidOperationException($"Product with ID '{request.Id}' already exists");
+                }
 
-            _dbContext.Products.Add(product);
-            await _dbContext.SaveChangesAsync();
+                var product = new Product
+                {
+                    Id = request.Id,
+                    Name = request.Name,
+                    Description = request.Description,
+                    Price = request.Price,
+                    OriginalPrice = request.OriginalPrice,
+                    CategoryId = request.CategoryId,
+                    SubcategoryId = request.SubcategoryId,
+                    Brand = request.Brand,
+                    Rating = request.Rating,
+                    ReviewCount = request.ReviewCount,
+                    InStock = request.InStock,
+                    StockCount = request.StockCount,
+                    Images = JsonSerializer.Serialize(request.Images),
+                    Features = JsonSerializer.Serialize(request.Features),
+                    Specifications = JsonSerializer.Serialize(request.Specifications),
+                    Tags = JsonSerializer.Serialize(request.Tags),
+                    Sizes = request.Sizes != null ? JsonSerializer.Serialize(request.Sizes) : null,
+                    Colors = request.Colors != null ? JsonSerializer.Serialize(request.Colors) : null,
+                    CreatedAtUtc = DateTime.UtcNow,
+                    IsActive = request.IsActive
+                };
 
-            return product;
+                _dbContext.Products.Add(product);
+                await _dbContext.SaveChangesAsync();
+
+                return product;
+            }
+            catch (DbUpdateException ex)
+            {
+                // Handle database-specific errors with more descriptive messages
+                if (ex.InnerException?.Message.Contains("UNIQUE constraint failed") == true)
+                {
+                    throw new InvalidOperationException($"Product with ID '{request.Id}' already exists in the database");
+                }
+                else if (ex.InnerException?.Message.Contains("FOREIGN KEY constraint failed") == true)
+                {
+                    throw new InvalidOperationException($"Invalid category or subcategory reference for product '{request.Id}'. Please ensure the category '{request.CategoryId}' exists");
+                }
+                else if (ex.InnerException?.Message.Contains("NOT NULL constraint failed") == true)
+                {
+                    var field = ExtractFieldFromConstraintError(ex.InnerException.Message);
+                    throw new InvalidOperationException($"Required field '{field}' is missing for product '{request.Id}'");
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Database error while creating product '{request.Id}': {ex.InnerException?.Message ?? ex.Message}");
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Failed to create product '{request.Id}': {ex.Message}");
+            }
+        }
+
+        private string ExtractFieldFromConstraintError(string errorMessage)
+        {
+            // Extract field name from SQLite constraint error messages
+            if (errorMessage.Contains("Products."))
+            {
+                var start = errorMessage.IndexOf("Products.") + 9;
+                var end = errorMessage.IndexOf(" ", start);
+                if (end == -1) end = errorMessage.Length;
+                return errorMessage.Substring(start, end - start);
+            }
+            return "unknown field";
         }
 
         private ProductResponse ConvertToProductResponse(Product product)

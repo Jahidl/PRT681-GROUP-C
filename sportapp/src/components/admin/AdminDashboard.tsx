@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Package, 
   Users, 
@@ -10,7 +10,8 @@ import {
   X
 } from 'lucide-react';
 import { Button } from '../ui/button';
-import { productService } from '../../services/productService';
+import { ApiProductService } from '../../services/apiProductService';
+import { CategoryService } from '../../services/categoryService';
 import CreateProduct from './CreateProduct';
 import CreateCategory from './CreateCategory';
 import CsvUpload from './CsvUpload';
@@ -20,22 +21,73 @@ import ProductManagement from '../ProductManagement';
 
 type AdminView = 'dashboard' | 'products' | 'categories' | 'users' | 'orders' | 'create-product' | 'create-category' | 'csv-upload' | 'jobs';
 
+interface DashboardStats {
+  totalProducts: number;
+  totalCategories: number;
+  totalUsers: number;
+  totalOrders: number;
+  revenue: number;
+  pendingOrders: number;
+}
+
 const AdminDashboard: React.FC = () => {
   const [currentView, setCurrentView] = useState<AdminView>('dashboard');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-
-  const products = productService.getAllProducts();
-  const categories = productService.getCategories();
-
-  // Mock data for dashboard stats
-  const stats = {
-    totalProducts: products.length,
-    totalCategories: categories.length,
+  const [stats, setStats] = useState<DashboardStats>({
+    totalProducts: 0,
+    totalCategories: 0,
     totalUsers: 1247, // Mock data
     totalOrders: 856, // Mock data
     revenue: 45678.90, // Mock data
     pendingOrders: 23 // Mock data
-  };
+  });
+  // Load dashboard stats
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        // Fetch real data from APIs
+        const [products, categories] = await Promise.all([
+          ApiProductService.getProducts(),
+          CategoryService.getCategories()
+        ]);
+
+        setStats(prevStats => ({
+          ...prevStats,
+          totalProducts: products.length,
+          totalCategories: categories.length
+        }));
+      } catch (error) {
+        console.error('Failed to load dashboard stats:', error);
+        // Keep default values on error
+      }
+    };
+
+    loadStats();
+  }, []);
+
+  // Refresh stats when returning to dashboard or after operations
+  useEffect(() => {
+    if (currentView === 'dashboard') {
+      const refreshStats = async () => {
+        try {
+          const [products, categories] = await Promise.all([
+            ApiProductService.getProducts(),
+            CategoryService.getCategories()
+          ]);
+
+          setStats(prevStats => ({
+            ...prevStats,
+            totalProducts: products.length,
+            totalCategories: categories.length
+          }));
+        } catch (error) {
+          console.error('Failed to refresh dashboard stats:', error);
+        }
+      };
+
+      refreshStats();
+    }
+  }, [currentView]);
 
   const renderSidebar = () => (
     <div className={`${sidebarCollapsed ? 'w-16' : 'w-64'} bg-gray-900 border-r border-gray-800 min-h-screen transition-all duration-300`}>
