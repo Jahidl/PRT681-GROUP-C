@@ -39,17 +39,34 @@ const ProductManagement: React.FC = () => {
       setError(null);
       
       try {
-        // Load products and categories in parallel
-        const [productsData, categoriesData] = await Promise.all([
-          ApiProductService.getProducts(),
-          CategoryService.getCategories()
-        ]);
+        console.log('Loading products from API...');
+        
+        // Try to load products first
+        let productsData: Product[] = [];
+        try {
+          productsData = await ApiProductService.getProducts();
+          console.log('Products loaded:', productsData.length);
+        } catch (productError: any) {
+          console.error('Error loading products:', productError);
+          throw new Error(`Failed to load products: ${productError?.message || 'Unknown error'}`);
+        }
+        
+        // Try to load categories
+        let categoriesData: Category[] = [];
+        try {
+          categoriesData = await CategoryService.getCategories();
+          console.log('Categories loaded:', categoriesData.length);
+        } catch (categoryError) {
+          console.error('Error loading categories:', categoryError);
+          // Categories are less critical, so we can continue without them
+          console.warn('Continuing without categories');
+        }
         
         setProducts(productsData);
         setCategories(categoriesData);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error loading data:', error);
-        setError('Failed to load data. Please try again.');
+        setError(`Failed to load data: ${error?.message || 'Unknown error'}. Make sure the API server is running on http://localhost:8080`);
       } finally {
         setLoading(false);
       }
@@ -63,11 +80,13 @@ const ProductManagement: React.FC = () => {
     setError(null);
     
     try {
+      console.log('Refreshing products from API...');
       const productsData = await ApiProductService.getProducts();
+      console.log('Products refreshed:', productsData.length);
       setProducts(productsData);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error refreshing products:', error);
-      setError('Failed to refresh data. Please try again.');
+      setError(`Failed to refresh data: ${error?.message || 'Unknown error'}. Make sure the API server is running on http://localhost:8080`);
     } finally {
       setLoading(false);
     }

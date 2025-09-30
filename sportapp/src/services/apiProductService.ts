@@ -99,13 +99,51 @@ export class ApiProductService {
       reviewCount: p.reviewCount,
       inStock: p.inStock,
       stockCount: p.stockCount,
-      images: JSON.parse(p.images || "[]"),
-      features: JSON.parse(p.features || "[]"),
-      specifications: JSON.parse(p.specifications || "{}"),
-      tags: JSON.parse(p.tags || "[]"),
-      sizes: p.sizes ? JSON.parse(p.sizes) : undefined,
-      colors: p.colors ? JSON.parse(p.colors) : undefined,
+      images: this.parseJsonField(p.images, []),
+      features: this.parseJsonField(p.features, []),
+      specifications: this.parseJsonField(p.specifications, {}),
+      tags: this.parseJsonField(p.tags, []),
+      sizes: p.sizes ? this.parseJsonField(p.sizes, undefined) : undefined,
+      colors: p.colors ? this.parseJsonField(p.colors, undefined) : undefined,
     }));
+  }
+
+  private static parseJsonField<T>(
+    value: string | undefined,
+    defaultValue: T
+  ): T {
+    if (!value) return defaultValue;
+
+    try {
+      return JSON.parse(value);
+    } catch (error) {
+      console.warn(
+        `Failed to parse JSON field: "${value}". Using fallback logic.`
+      );
+
+      // Handle comma-separated strings as arrays
+      if (Array.isArray(defaultValue)) {
+        // If it looks like a comma-separated list, split it
+        if (
+          typeof value === "string" &&
+          value.includes(",") &&
+          !value.startsWith("[")
+        ) {
+          return value.split(",").map((item) => item.trim()) as T;
+        }
+        // If it's a single value, wrap it in an array
+        if (typeof value === "string" && value.trim()) {
+          return [value.trim()] as T;
+        }
+      }
+
+      // For objects, return empty object if parsing fails
+      if (typeof defaultValue === "object" && !Array.isArray(defaultValue)) {
+        return {} as T;
+      }
+
+      return defaultValue;
+    }
   }
 
   static async getProductById(id: string): Promise<Product> {
@@ -125,12 +163,16 @@ export class ApiProductService {
       reviewCount: product.reviewCount,
       inStock: product.inStock,
       stockCount: product.stockCount,
-      images: JSON.parse(product.images || "[]"),
-      features: JSON.parse(product.features || "[]"),
-      specifications: JSON.parse(product.specifications || "{}"),
-      tags: JSON.parse(product.tags || "[]"),
-      sizes: product.sizes ? JSON.parse(product.sizes) : undefined,
-      colors: product.colors ? JSON.parse(product.colors) : undefined,
+      images: this.parseJsonField(product.images, []),
+      features: this.parseJsonField(product.features, []),
+      specifications: this.parseJsonField(product.specifications, {}),
+      tags: this.parseJsonField(product.tags, []),
+      sizes: product.sizes
+        ? this.parseJsonField(product.sizes, undefined)
+        : undefined,
+      colors: product.colors
+        ? this.parseJsonField(product.colors, undefined)
+        : undefined,
     };
   }
 
