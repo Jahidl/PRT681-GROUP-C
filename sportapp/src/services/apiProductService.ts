@@ -59,12 +59,12 @@ export interface ProductResponse {
   reviewCount: number;
   inStock: boolean;
   stockCount: number;
-  images: string[];
-  features: string[];
-  specifications: Record<string, string>;
-  tags: string[];
-  sizes?: string[];
-  colors?: string[];
+  images: string;
+  features: string;
+  specifications: string;
+  tags: string;
+  sizes?: string;
+  colors?: string;
   createdAtUtc: string;
   updatedAtUtc?: string;
   isActive: boolean;
@@ -99,12 +99,12 @@ export class ApiProductService {
       reviewCount: p.reviewCount,
       inStock: p.inStock,
       stockCount: p.stockCount,
-      images: p.images,
-      features: p.features,
-      specifications: p.specifications,
-      tags: p.tags,
-      sizes: p.sizes,
-      colors: p.colors,
+      images: JSON.parse(p.images || "[]"),
+      features: JSON.parse(p.features || "[]"),
+      specifications: JSON.parse(p.specifications || "{}"),
+      tags: JSON.parse(p.tags || "[]"),
+      sizes: p.sizes ? JSON.parse(p.sizes) : undefined,
+      colors: p.colors ? JSON.parse(p.colors) : undefined,
     }));
   }
 
@@ -125,12 +125,12 @@ export class ApiProductService {
       reviewCount: product.reviewCount,
       inStock: product.inStock,
       stockCount: product.stockCount,
-      images: product.images,
-      features: product.features,
-      specifications: product.specifications,
-      tags: product.tags,
-      sizes: product.sizes,
-      colors: product.colors,
+      images: JSON.parse(product.images || "[]"),
+      features: JSON.parse(product.features || "[]"),
+      specifications: JSON.parse(product.specifications || "{}"),
+      tags: JSON.parse(product.tags || "[]"),
+      sizes: product.sizes ? JSON.parse(product.sizes) : undefined,
+      colors: product.colors ? JSON.parse(product.colors) : undefined,
     };
   }
 
@@ -178,12 +178,12 @@ export class ApiProductService {
       reviewCount: created.reviewCount,
       inStock: created.inStock,
       stockCount: created.stockCount,
-      images: created.images,
-      features: created.features,
-      specifications: created.specifications,
-      tags: created.tags,
-      sizes: created.sizes,
-      colors: created.colors,
+      images: JSON.parse(created.images || "[]"),
+      features: JSON.parse(created.features || "[]"),
+      specifications: JSON.parse(created.specifications || "{}"),
+      tags: JSON.parse(created.tags || "[]"),
+      sizes: created.sizes ? JSON.parse(created.sizes) : undefined,
+      colors: created.colors ? JSON.parse(created.colors) : undefined,
     };
   }
 
@@ -233,12 +233,12 @@ export class ApiProductService {
       reviewCount: updated.reviewCount,
       inStock: updated.inStock,
       stockCount: updated.stockCount,
-      images: updated.images,
-      features: updated.features,
-      specifications: updated.specifications,
-      tags: updated.tags,
-      sizes: updated.sizes,
-      colors: updated.colors,
+      images: JSON.parse(updated.images || "[]"),
+      features: JSON.parse(updated.features || "[]"),
+      specifications: JSON.parse(updated.specifications || "{}"),
+      tags: JSON.parse(updated.tags || "[]"),
+      sizes: updated.sizes ? JSON.parse(updated.sizes) : undefined,
+      colors: updated.colors ? JSON.parse(updated.colors) : undefined,
     };
   }
 

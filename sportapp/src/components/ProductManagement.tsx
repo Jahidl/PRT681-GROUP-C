@@ -11,10 +11,10 @@ import {
   DollarSign
 } from 'lucide-react';
 import { Button } from './ui/button';
-import { productService } from '../services/productService';
 import { CategoryService } from '../services/categoryService';
+import { productService } from '../services/productService';
 import CreateProduct from './admin/CreateProduct';
-import type { Product } from '../types/product';
+import type { Product, Category as ProductCategory } from '../types/product';
 import type { Category } from '../types/category';
 
 type ProductManagementView = 'list' | 'create' | 'edit';
@@ -39,7 +39,7 @@ const ProductManagement: React.FC = () => {
         console.error('Error loading categories:', error);
         // Fallback to local categories if API fails - convert ProductCategory to Category
         const localCategories = productService.getCategories();
-        const convertedCategories: Category[] = localCategories.map(cat => ({
+        const convertedCategories: Category[] = localCategories.map((cat: ProductCategory) => ({
           id: cat.id,
           name: cat.name,
           description: cat.description,
@@ -60,7 +60,7 @@ const ProductManagement: React.FC = () => {
 
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(product => 
+      filtered = filtered.filter((product: Product) => 
         product.name.toLowerCase().includes(query) ||
         product.brand.toLowerCase().includes(query) ||
         product.category.toLowerCase().includes(query) ||
@@ -69,7 +69,7 @@ const ProductManagement: React.FC = () => {
     }
 
     if (selectedCategory) {
-      filtered = filtered.filter(product => product.category === selectedCategory);
+      filtered = filtered.filter((product: Product) => product.category === selectedCategory);
     }
 
     return filtered;
@@ -156,7 +156,7 @@ const ProductManagement: React.FC = () => {
             <div>
               <p className="text-gray-400 text-sm">In Stock</p>
               <p className="text-2xl font-bold text-white">
-                {products.filter(p => p.inStock).length}
+                {products.filter((p: Product) => p.inStock).length}
               </p>
             </div>
             <Eye className="h-8 w-8 text-green-500" />
@@ -195,7 +195,7 @@ const ProductManagement: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                filteredProducts.map((product) => (
+                filteredProducts.map((product: Product) => (
                   <tr key={product.id} className="border-b border-gray-800 hover:bg-gray-800/50">
                     <td className="py-4 px-6">
                       <div className="flex items-center space-x-3">
