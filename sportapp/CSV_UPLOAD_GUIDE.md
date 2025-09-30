@@ -41,7 +41,7 @@ running-shoes-1,Running Shoes,Comfortable running shoes for daily training,79.99
 1. **Required Fields**: Id, Name, CategoryId, Brand, and Price must be filled for every row
 2. **JSON Fields**: Images, Features, Specifications, Tags, Sizes, and Colors must be valid JSON format
 3. **Boolean Fields**: Use `true` or `false` (lowercase)
-4. **Categories**: Make sure CategoryId and SubcategoryId exist in your system before uploading
+4. **Auto-Creation**: Categories and subcategories will be automatically created if they don't exist
 5. **Quotes**: Use double quotes around JSON strings and escape inner quotes with `""`
 6. **File Format**: Save as CSV with UTF-8 encoding
 

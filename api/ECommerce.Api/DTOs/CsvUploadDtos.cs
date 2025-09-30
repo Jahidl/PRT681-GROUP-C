@@ -9,6 +9,8 @@ namespace ECommerce.Api.DTOs
         public int FailedRows { get; set; }
         public List<string> Errors { get; set; } = new List<string>();
         public List<ProductResponse> CreatedProducts { get; set; } = new List<ProductResponse>();
+        public List<string> CreatedCategories { get; set; } = new List<string>();
+        public List<string> CreatedSubcategories { get; set; } = new List<string>();
     }
 
     public class CsvProductRow

@@ -350,6 +350,8 @@ namespace ECommerce.Api.Endpoints
 
                 var result = new CsvUploadResult();
                 var createdProducts = new List<ProductResponse>();
+                var createdCategories = new List<string>();
+                var createdSubcategories = new List<string>();
                 var errors = new List<string>();
 
                 try
@@ -366,7 +368,7 @@ namespace ECommerce.Api.Endpoints
                     // Skip header row
                     result.TotalRows = lines.Length - 1;
 
-                    // Get existing categories and subcategories for validation
+                    // Get existing categories and subcategories for reference
                     var categories = await db.Categories.ToDictionaryAsync(c => c.Id, c => c);
                     var subcategories = await db.Subcategories.ToDictionaryAsync(s => s.Id, s => s);
 
@@ -397,21 +399,47 @@ namespace ECommerce.Api.Endpoints
                                 continue;
                             }
 
-                            // Validate category exists
+                            // Create category if it doesn't exist
                             if (!categories.ContainsKey(csvRow.CategoryId))
                             {
-                                errors.Add($"Row {i}: Category '{csvRow.CategoryId}' not found");
-                                result.FailedRows++;
-                                continue;
+                                var newCategory = new Category
+                                {
+                                    Id = csvRow.CategoryId,
+                                    Name = csvRow.CategoryId.Replace("-", " ").Replace("_", " "),
+                                    Description = $"Auto-created category for {csvRow.CategoryId}",
+                                    Image = "/categories/default-category.jpg",
+                                    IsActive = true,
+                                    SortOrder = 0
+                                };
+                                
+                                db.Categories.Add(newCategory);
+                                await db.SaveChangesAsync();
+                                categories[csvRow.CategoryId] = newCategory;
+                                createdCategories.Add(csvRow.CategoryId);
                             }
 
-                            // Validate subcategory if provided
+                            // Create subcategory if provided and doesn't exist
                             if (!string.IsNullOrEmpty(csvRow.SubcategoryId))
                             {
-                                if (!subcategories.ContainsKey(csvRow.SubcategoryId) || 
-                                    subcategories[csvRow.SubcategoryId].CategoryId != csvRow.CategoryId)
+                                if (!subcategories.ContainsKey(csvRow.SubcategoryId))
                                 {
-                                    errors.Add($"Row {i}: Subcategory '{csvRow.SubcategoryId}' not found or doesn't belong to category '{csvRow.CategoryId}'");
+                                    var newSubcategory = new Subcategory
+                                    {
+                                        Id = csvRow.SubcategoryId,
+                                        Name = csvRow.SubcategoryId.Replace("-", " ").Replace("_", " "),
+                                        Description = $"Auto-created subcategory for {csvRow.SubcategoryId}",
+                                        CategoryId = csvRow.CategoryId,
+                                        IsActive = true
+                                    };
+                                    
+                                    db.Subcategories.Add(newSubcategory);
+                                    await db.SaveChangesAsync();
+                                    subcategories[csvRow.SubcategoryId] = newSubcategory;
+                                    createdSubcategories.Add(csvRow.SubcategoryId);
+                                }
+                                else if (subcategories[csvRow.SubcategoryId].CategoryId != csvRow.CategoryId)
+                                {
+                                    errors.Add($"Row {i}: Subcategory '{csvRow.SubcategoryId}' already exists but belongs to a different category");
                                     result.FailedRows++;
                                     continue;
                                 }
@@ -423,19 +451,95 @@ namespace ECommerce.Api.Endpoints
 
                             try
                             {
-                                images = JsonSerializer.Deserialize<List<string>>(csvRow.Images) ?? new List<string>();
-                                features = JsonSerializer.Deserialize<List<string>>(csvRow.Features) ?? new List<string>();
-                                specifications = JsonSerializer.Deserialize<Dictionary<string, string>>(csvRow.Specifications) ?? new Dictionary<string, string>();
-                                tags = JsonSerializer.Deserialize<List<string>>(csvRow.Tags) ?? new List<string>();
-                                
-                                if (!string.IsNullOrEmpty(csvRow.Sizes))
-                                    sizes = JsonSerializer.Deserialize<List<string>>(csvRow.Sizes);
-                                if (!string.IsNullOrEmpty(csvRow.Colors))
-                                    colors = JsonSerializer.Deserialize<List<string>>(csvRow.Colors);
+                                // Parse Images
+                                try
+                                {
+                                    images = string.IsNullOrEmpty(csvRow.Images) || csvRow.Images == "[]" 
+                                        ? new List<string>() 
+                                        : JsonSerializer.Deserialize<List<string>>(csvRow.Images) ?? new List<string>();
+                                }
+                                catch (JsonException ex)
+                                {
+                                    errors.Add($"Row {i}: Invalid JSON format in Images field: {ex.Message}");
+                                    result.FailedRows++;
+                                    continue;
+                                }
+
+                                // Parse Features
+                                try
+                                {
+                                    features = string.IsNullOrEmpty(csvRow.Features) || csvRow.Features == "[]" 
+                                        ? new List<string>() 
+                                        : JsonSerializer.Deserialize<List<string>>(csvRow.Features) ?? new List<string>();
+                                }
+                                catch (JsonException ex)
+                                {
+                                    errors.Add($"Row {i}: Invalid JSON format in Features field: {ex.Message}");
+                                    result.FailedRows++;
+                                    continue;
+                                }
+
+                                // Parse Specifications
+                                try
+                                {
+                                    specifications = string.IsNullOrEmpty(csvRow.Specifications) || csvRow.Specifications == "{}" 
+                                        ? new Dictionary<string, string>() 
+                                        : JsonSerializer.Deserialize<Dictionary<string, string>>(csvRow.Specifications) ?? new Dictionary<string, string>();
+                                }
+                                catch (JsonException ex)
+                                {
+                                    errors.Add($"Row {i}: Invalid JSON format in Specifications field: {ex.Message}");
+                                    result.FailedRows++;
+                                    continue;
+                                }
+
+                                // Parse Tags
+                                try
+                                {
+                                    tags = string.IsNullOrEmpty(csvRow.Tags) || csvRow.Tags == "[]" 
+                                        ? new List<string>() 
+                                        : JsonSerializer.Deserialize<List<string>>(csvRow.Tags) ?? new List<string>();
+                                }
+                                catch (JsonException ex)
+                                {
+                                    errors.Add($"Row {i}: Invalid JSON format in Tags field: {ex.Message}");
+                                    result.FailedRows++;
+                                    continue;
+                                }
+
+                                // Parse Sizes (optional)
+                                if (!string.IsNullOrEmpty(csvRow.Sizes) && csvRow.Sizes != "[]")
+                                {
+                                    try
+                                    {
+                                        sizes = JsonSerializer.Deserialize<List<string>>(csvRow.Sizes);
+                                    }
+                                    catch (JsonException ex)
+                                    {
+                                        errors.Add($"Row {i}: Invalid JSON format in Sizes field: {ex.Message}");
+                                        result.FailedRows++;
+                                        continue;
+                                    }
+                                }
+
+                                // Parse Colors (optional)
+                                if (!string.IsNullOrEmpty(csvRow.Colors) && csvRow.Colors != "[]")
+                                {
+                                    try
+                                    {
+                                        colors = JsonSerializer.Deserialize<List<string>>(csvRow.Colors);
+                                    }
+                                    catch (JsonException ex)
+                                    {
+                                        errors.Add($"Row {i}: Invalid JSON format in Colors field: {ex.Message}");
+                                        result.FailedRows++;
+                                        continue;
+                                    }
+                                }
                             }
-                            catch (JsonException)
+                            catch (Exception ex)
                             {
-                                errors.Add($"Row {i}: Invalid JSON format in one or more fields");
+                                errors.Add($"Row {i}: Error processing JSON fields: {ex.Message}");
                                 result.FailedRows++;
                                 continue;
                             }
@@ -506,6 +610,8 @@ namespace ECommerce.Api.Endpoints
 
                     result.Errors = errors;
                     result.CreatedProducts = createdProducts;
+                    result.CreatedCategories = createdCategories.Distinct().ToList();
+                    result.CreatedSubcategories = createdSubcategories.Distinct().ToList();
 
                     return Results.Ok(result);
                 }
@@ -526,18 +632,37 @@ namespace ECommerce.Api.Endpoints
             var values = new List<string>();
             var currentValue = new StringBuilder();
             bool inQuotes = false;
+            bool escapeNext = false;
 
             for (int i = 0; i < csvLine.Length; i++)
             {
                 char c = csvLine[i];
 
-                if (c == '"')
+                if (escapeNext)
                 {
-                    inQuotes = !inQuotes;
+                    currentValue.Append(c);
+                    escapeNext = false;
+                }
+                else if (c == '\\')
+                {
+                    escapeNext = true;
+                }
+                else if (c == '"')
+                {
+                    if (inQuotes && i + 1 < csvLine.Length && csvLine[i + 1] == '"')
+                    {
+                        // Handle escaped quotes ("")
+                        currentValue.Append('"');
+                        i++; // Skip the next quote
+                    }
+                    else
+                    {
+                        inQuotes = !inQuotes;
+                    }
                 }
                 else if (c == ',' && !inQuotes)
                 {
-                    values.Add(currentValue.ToString().Trim());
+                    values.Add(currentValue.ToString());
                     currentValue.Clear();
                 }
                 else
@@ -547,12 +672,25 @@ namespace ECommerce.Api.Endpoints
             }
 
             // Add the last value
-            values.Add(currentValue.ToString().Trim());
+            values.Add(currentValue.ToString());
 
             // Ensure we have enough values (pad with empty strings if needed)
             while (values.Count < 19)
             {
                 values.Add("");
+            }
+
+            // Clean up the values by removing surrounding quotes and trimming
+            for (int i = 0; i < values.Count; i++)
+            {
+                var value = values[i].Trim();
+                if (value.StartsWith('"') && value.EndsWith('"') && value.Length > 1)
+                {
+                    value = value.Substring(1, value.Length - 2);
+                    // Unescape double quotes
+                    value = value.Replace("\"\"", "\"");
+                }
+                values[i] = value;
             }
 
             return new CsvProductRow

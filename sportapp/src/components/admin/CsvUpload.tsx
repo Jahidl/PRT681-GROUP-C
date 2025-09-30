@@ -8,6 +8,8 @@ interface CsvUploadResult {
   failedRows: number;
   errors: string[];
   createdProducts: any[];
+  createdCategories: string[];
+  createdSubcategories: string[];
 }
 
 interface CsvUploadProps {
@@ -290,9 +292,27 @@ const CsvUpload: React.FC<CsvUploadProps> = ({ onCancel, onUploaded }) => {
 
             {result.successfulRows > 0 && (
               <div className="mt-4 bg-green-900/20 border border-green-800 rounded-lg p-4">
-                <p className="text-green-400">
+                <p className="text-green-400 mb-3">
                   Successfully uploaded {result.successfulRows} product{result.successfulRows !== 1 ? 's' : ''}!
                 </p>
+                
+                {result.createdCategories && result.createdCategories.length > 0 && (
+                  <div className="mb-2">
+                    <span className="text-green-300 text-sm font-medium">Created Categories: </span>
+                    <span className="text-green-200 text-sm">
+                      {result.createdCategories.join(', ')}
+                    </span>
+                  </div>
+                )}
+                
+                {result.createdSubcategories && result.createdSubcategories.length > 0 && (
+                  <div>
+                    <span className="text-green-300 text-sm font-medium">Created Subcategories: </span>
+                    <span className="text-green-200 text-sm">
+                      {result.createdSubcategories.join(', ')}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
           </div>
