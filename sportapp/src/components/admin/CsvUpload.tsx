@@ -2,6 +2,40 @@ import React, { useState, useRef } from 'react';
 import { Upload, Download, AlertCircle, CheckCircle, X, FileText } from 'lucide-react';
 import { Button } from '../ui/button';
 
+// Toast notification component
+interface ToastProps {
+  message: string;
+  type: 'success' | 'error' | 'info';
+  onClose: () => void;
+}
+
+const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
+  const bgColor = type === 'success' ? 'bg-green-600' : type === 'error' ? 'bg-red-600' : 'bg-blue-600';
+  const icon = type === 'success' ? <CheckCircle className="h-5 w-5" /> : 
+               type === 'error' ? <AlertCircle className="h-5 w-5" /> : 
+               <AlertCircle className="h-5 w-5" />;
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      onClose();
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <div className={`fixed top-4 right-4 z-50 ${bgColor} text-white px-6 py-4 rounded-lg shadow-lg flex items-center space-x-3 max-w-md`}>
+      {icon}
+      <span className="flex-1">{message}</span>
+      <button
+        onClick={onClose}
+        className="text-white hover:text-gray-200 transition-colors"
+      >
+        <X className="h-4 w-4" />
+      </button>
+    </div>
+  );
+};
+
 interface CsvUploadResult {
   totalRows: number;
   successfulRows: number;
@@ -22,14 +56,23 @@ const CsvUpload: React.FC<CsvUploadProps> = ({ onCancel, onUploaded }) => {
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState<CsvUploadResult | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const showToast = (message: string, type: 'success' | 'error' | 'info') => {
+    setToast({ message, type });
+  };
+
+  const hideToast = () => {
+    setToast(null);
+  };
 
   const handleFileSelect = (selectedFile: File) => {
     if (selectedFile && selectedFile.name.endsWith('.csv')) {
       setFile(selectedFile);
       setResult(null);
     } else {
-      alert('Please select a CSV file');
+      showToast('Please select a CSV file', 'error');
     }
   };
 
@@ -67,7 +110,7 @@ const CsvUpload: React.FC<CsvUploadProps> = ({ onCancel, onUploaded }) => {
     formData.append('file', file);
 
     try {
-      const response = await fetch('/api/products/upload-csv', {
+      const response = await fetch('http://localhost:8080/api/products/upload-csv', {
         method: 'POST',
         body: formData,
       });
@@ -76,15 +119,18 @@ const CsvUpload: React.FC<CsvUploadProps> = ({ onCancel, onUploaded }) => {
         const uploadResult: CsvUploadResult = await response.json();
         setResult(uploadResult);
         if (uploadResult.successfulRows > 0) {
+          showToast(`Successfully uploaded ${uploadResult.successfulRows} product${uploadResult.successfulRows !== 1 ? 's' : ''}!`, 'success');
           onUploaded();
+        } else if (uploadResult.failedRows > 0) {
+          showToast(`Upload completed with ${uploadResult.failedRows} failed row${uploadResult.failedRows !== 1 ? 's' : ''}. Check the results below.`, 'error');
         }
       } else {
         const error = await response.json();
-        alert(`Upload failed: ${error.message}`);
+        showToast(`Upload failed: ${error.message}`, 'error');
       }
     } catch (error) {
       console.error('Upload error:', error);
-      alert('Upload failed. Please try again.');
+      showToast('Upload failed. Please try again.', 'error');
     } finally {
       setUploading(false);
     }
@@ -127,10 +173,20 @@ const CsvUpload: React.FC<CsvUploadProps> = ({ onCancel, onUploaded }) => {
     a.download = 'product-upload-template.csv';
     a.click();
     window.URL.revokeObjectURL(url);
+    showToast('CSV template downloaded successfully!', 'success');
   };
 
   return (
     <div className="p-8">
+      {/* Toast Notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={hideToast}
+        />
+      )}
+      
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
