@@ -20,3 +20,4 @@ Release/
 
 # Config (keep only if needed)
 appsettings.Development.json
+.DS_Store
