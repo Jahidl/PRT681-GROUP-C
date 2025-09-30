@@ -13,10 +13,11 @@ import { Button } from '../ui/button';
 import { productService } from '../../services/productService';
 import CreateProduct from './CreateProduct';
 import CreateCategory from './CreateCategory';
+import CsvUpload from './CsvUpload';
 import CategoryManagement from '../CategoryManagement';
 import ProductManagement from '../ProductManagement';
 
-type AdminView = 'dashboard' | 'products' | 'categories' | 'users' | 'orders' | 'create-product' | 'create-category';
+type AdminView = 'dashboard' | 'products' | 'categories' | 'users' | 'orders' | 'create-product' | 'create-category' | 'csv-upload';
 
 const AdminDashboard: React.FC = () => {
   const [currentView, setCurrentView] = useState<AdminView>('dashboard');
@@ -200,6 +201,13 @@ const AdminDashboard: React.FC = () => {
               Add New Product
             </Button>
             <Button 
+              onClick={() => setCurrentView('csv-upload')}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white justify-start"
+            >
+              <Package className="h-4 w-4 mr-2" />
+              Upload Products CSV
+            </Button>
+            <Button 
               onClick={() => setCurrentView('create-category')}
               variant="outline"
               className="w-full border-gray-600 text-gray-300 hover:text-white hover:bg-gray-800 justify-start"
@@ -251,6 +259,13 @@ const AdminDashboard: React.FC = () => {
           <CreateCategory 
             onCancel={() => setCurrentView('categories')}
             onCreated={() => setCurrentView('categories')}
+          />
+        );
+      case 'csv-upload':
+        return (
+          <CsvUpload 
+            onCancel={() => setCurrentView('products')}
+            onUploaded={() => setCurrentView('products')}
           />
         );
       default:

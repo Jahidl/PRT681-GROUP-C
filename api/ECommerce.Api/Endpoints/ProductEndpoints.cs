@@ -4,6 +4,8 @@ using ECommerce.Api.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
+using System.Globalization;
+using System.Text;
 
 namespace ECommerce.Api.Endpoints
 {
@@ -333,7 +335,248 @@ namespace ECommerce.Api.Endpoints
             .WithName("DeleteProduct")
             .WithOpenApi();
 
+            // POST upload CSV
+            group.MapPost("/upload-csv", async (IFormFile file, AppDbContext db) =>
+            {
+                if (file == null || file.Length == 0)
+                {
+                    return Results.BadRequest(new { message = "No file uploaded" });
+                }
+
+                if (!file.FileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+                {
+                    return Results.BadRequest(new { message = "File must be a CSV file" });
+                }
+
+                var result = new CsvUploadResult();
+                var createdProducts = new List<ProductResponse>();
+                var errors = new List<string>();
+
+                try
+                {
+                    using var reader = new StreamReader(file.OpenReadStream());
+                    var csvContent = await reader.ReadToEndAsync();
+                    var lines = csvContent.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+                    
+                    if (lines.Length < 2)
+                    {
+                        return Results.BadRequest(new { message = "CSV file must contain at least a header row and one data row" });
+                    }
+
+                    // Skip header row
+                    result.TotalRows = lines.Length - 1;
+
+                    // Get existing categories and subcategories for validation
+                    var categories = await db.Categories.ToDictionaryAsync(c => c.Id, c => c);
+                    var subcategories = await db.Subcategories.ToDictionaryAsync(s => s.Id, s => s);
+
+                    for (int i = 1; i < lines.Length; i++)
+                    {
+                        var line = lines[i].Trim();
+                        if (string.IsNullOrEmpty(line)) continue;
+
+                        try
+                        {
+                            var csvRow = ParseCsvRow(line);
+                            
+                            // Validate required fields
+                            if (string.IsNullOrEmpty(csvRow.Id) || string.IsNullOrEmpty(csvRow.Name) || 
+                                string.IsNullOrEmpty(csvRow.CategoryId) || string.IsNullOrEmpty(csvRow.Brand))
+                            {
+                                errors.Add($"Row {i}: Missing required fields (Id, Name, CategoryId, Brand)");
+                                result.FailedRows++;
+                                continue;
+                            }
+
+                            // Check if product already exists
+                            var exists = await db.Products.AnyAsync(p => p.Id == csvRow.Id);
+                            if (exists)
+                            {
+                                errors.Add($"Row {i}: Product with ID '{csvRow.Id}' already exists");
+                                result.FailedRows++;
+                                continue;
+                            }
+
+                            // Validate category exists
+                            if (!categories.ContainsKey(csvRow.CategoryId))
+                            {
+                                errors.Add($"Row {i}: Category '{csvRow.CategoryId}' not found");
+                                result.FailedRows++;
+                                continue;
+                            }
+
+                            // Validate subcategory if provided
+                            if (!string.IsNullOrEmpty(csvRow.SubcategoryId))
+                            {
+                                if (!subcategories.ContainsKey(csvRow.SubcategoryId) || 
+                                    subcategories[csvRow.SubcategoryId].CategoryId != csvRow.CategoryId)
+                                {
+                                    errors.Add($"Row {i}: Subcategory '{csvRow.SubcategoryId}' not found or doesn't belong to category '{csvRow.CategoryId}'");
+                                    result.FailedRows++;
+                                    continue;
+                                }
+                            }
+
+                            // Validate and parse JSON fields
+                            List<string> images, features, tags, sizes = null, colors = null;
+                            Dictionary<string, string> specifications;
+
+                            try
+                            {
+                                images = JsonSerializer.Deserialize<List<string>>(csvRow.Images) ?? new List<string>();
+                                features = JsonSerializer.Deserialize<List<string>>(csvRow.Features) ?? new List<string>();
+                                specifications = JsonSerializer.Deserialize<Dictionary<string, string>>(csvRow.Specifications) ?? new Dictionary<string, string>();
+                                tags = JsonSerializer.Deserialize<List<string>>(csvRow.Tags) ?? new List<string>();
+                                
+                                if (!string.IsNullOrEmpty(csvRow.Sizes))
+                                    sizes = JsonSerializer.Deserialize<List<string>>(csvRow.Sizes);
+                                if (!string.IsNullOrEmpty(csvRow.Colors))
+                                    colors = JsonSerializer.Deserialize<List<string>>(csvRow.Colors);
+                            }
+                            catch (JsonException)
+                            {
+                                errors.Add($"Row {i}: Invalid JSON format in one or more fields");
+                                result.FailedRows++;
+                                continue;
+                            }
+
+                            // Create product
+                            var product = new Product
+                            {
+                                Id = csvRow.Id.Trim(),
+                                Name = csvRow.Name.Trim(),
+                                Description = csvRow.Description.Trim(),
+                                Price = csvRow.Price,
+                                OriginalPrice = csvRow.OriginalPrice,
+                                CategoryId = csvRow.CategoryId.Trim(),
+                                SubcategoryId = string.IsNullOrEmpty(csvRow.SubcategoryId) ? null : csvRow.SubcategoryId.Trim(),
+                                Brand = csvRow.Brand.Trim(),
+                                Rating = csvRow.Rating,
+                                ReviewCount = csvRow.ReviewCount,
+                                InStock = csvRow.InStock,
+                                StockCount = csvRow.StockCount,
+                                Images = JsonSerializer.Serialize(images),
+                                Features = JsonSerializer.Serialize(features),
+                                Specifications = JsonSerializer.Serialize(specifications),
+                                Tags = JsonSerializer.Serialize(tags),
+                                Sizes = sizes != null ? JsonSerializer.Serialize(sizes) : null,
+                                Colors = colors != null ? JsonSerializer.Serialize(colors) : null,
+                                IsActive = csvRow.IsActive
+                            };
+
+                            db.Products.Add(product);
+                            await db.SaveChangesAsync();
+
+                            var productResponse = new ProductResponse
+                            {
+                                Id = product.Id,
+                                Name = product.Name,
+                                Description = product.Description,
+                                Price = product.Price,
+                                OriginalPrice = product.OriginalPrice,
+                                CategoryId = product.CategoryId,
+                                SubcategoryId = product.SubcategoryId,
+                                Brand = product.Brand,
+                                Rating = product.Rating,
+                                ReviewCount = product.ReviewCount,
+                                InStock = product.InStock,
+                                StockCount = product.StockCount,
+                                Images = images,
+                                Features = features,
+                                Specifications = specifications,
+                                Tags = tags,
+                                Sizes = sizes,
+                                Colors = colors,
+                                CreatedAtUtc = product.CreatedAtUtc,
+                                UpdatedAtUtc = product.UpdatedAtUtc,
+                                IsActive = product.IsActive,
+                                CategoryName = categories[product.CategoryId].Name,
+                                SubcategoryName = product.SubcategoryId != null ? subcategories[product.SubcategoryId].Name : null
+                            };
+
+                            createdProducts.Add(productResponse);
+                            result.SuccessfulRows++;
+                        }
+                        catch (Exception ex)
+                        {
+                            errors.Add($"Row {i}: {ex.Message}");
+                            result.FailedRows++;
+                        }
+                    }
+
+                    result.Errors = errors;
+                    result.CreatedProducts = createdProducts;
+
+                    return Results.Ok(result);
+                }
+                catch (Exception ex)
+                {
+                    return Results.BadRequest(new { message = $"Error processing CSV file: {ex.Message}" });
+                }
+            })
+            .WithName("UploadProductsCsv")
+            .WithOpenApi()
+            .DisableAntiforgery();
+
             return routes;
+        }
+
+        private static CsvProductRow ParseCsvRow(string csvLine)
+        {
+            var values = new List<string>();
+            var currentValue = new StringBuilder();
+            bool inQuotes = false;
+
+            for (int i = 0; i < csvLine.Length; i++)
+            {
+                char c = csvLine[i];
+
+                if (c == '"')
+                {
+                    inQuotes = !inQuotes;
+                }
+                else if (c == ',' && !inQuotes)
+                {
+                    values.Add(currentValue.ToString().Trim());
+                    currentValue.Clear();
+                }
+                else
+                {
+                    currentValue.Append(c);
+                }
+            }
+
+            // Add the last value
+            values.Add(currentValue.ToString().Trim());
+
+            // Ensure we have enough values (pad with empty strings if needed)
+            while (values.Count < 19)
+            {
+                values.Add("");
+            }
+
+            return new CsvProductRow
+            {
+                Id = values[0],
+                Name = values[1],
+                Description = values[2],
+                Price = decimal.TryParse(values[3], out var price) ? price : 0,
+                OriginalPrice = decimal.TryParse(values[4], out var originalPrice) ? originalPrice : null,
+                CategoryId = values[5],
+                SubcategoryId = string.IsNullOrEmpty(values[6]) ? null : values[6],
+                Brand = values[7],
+                Rating = double.TryParse(values[8], out var rating) ? rating : 0,
+                ReviewCount = int.TryParse(values[9], out var reviewCount) ? reviewCount : 0,
+                InStock = bool.TryParse(values[10], out var inStock) ? inStock : true,
+                StockCount = int.TryParse(values[11], out var stockCount) ? stockCount : 0,
+                Images = string.IsNullOrEmpty(values[12]) ? "[]" : values[12],
+                Features = string.IsNullOrEmpty(values[13]) ? "[]" : values[13],
+                Specifications = string.IsNullOrEmpty(values[14]) ? "{}" : values[14],
+                Tags = string.IsNullOrEmpty(values[15]) ? "[]" : values[15],
+                Sizes = string.IsNullOrEmpty(values[16]) ? null : values[16],
+                Colors = string.IsNullOrEmpty(values[17]) ? null : values[17],
+                IsActive = bool.TryParse(values[18], out var isActive) ? isActive : true
+            };
         }
     }
 }
