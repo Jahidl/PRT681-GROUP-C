@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useCart } from "@/lib/cart.jsx";
+import { useCart } from "@/lib/Cart.jsx";
 
 export default function NavBar({ onToggleCart }) {
   const cart = useCart();
