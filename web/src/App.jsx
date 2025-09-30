@@ -6,7 +6,7 @@ import Login from "@/pages/Login.jsx";
 import Register from "@/pages/Register.jsx";
 import AdminPage from "@/pages/Admin.jsx";
 import ProtectedRoute from "@/lib/ProtectedRoute.jsx";   // ⬅️ add this
-import { CartProvider } from "@/lib/cart.jsx";
+import { CartProvider } from "@/lib/Cart.jsx";
 
 export default function App() {
   return (

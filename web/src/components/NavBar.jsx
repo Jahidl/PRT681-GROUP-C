@@ -2,7 +2,7 @@ import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "@/lib/cart.jsx";
 
-export default function Navbar({ onToggleCart }) {
+export default function NavBar({ onToggleCart }) {
   const cart = useCart();
   const nav = useNavigate();
 

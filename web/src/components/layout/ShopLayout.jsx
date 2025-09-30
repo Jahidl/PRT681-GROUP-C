@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Outlet } from "react-router-dom";
-import Navbar from "@/components/Navbar.jsx";
+import Navbar from "@/components/NavBar.jsx";
 import CartDrawer from "@/components/CartDrawer.jsx";
 
 export default function ShopLayout() {
