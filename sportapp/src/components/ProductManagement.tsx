@@ -8,13 +8,15 @@ import {
   Trash2, 
   Eye,
   Star,
-  DollarSign
+  DollarSign,
+  RefreshCw,
+  X
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { CategoryService } from '../services/categoryService';
-import { productService } from '../services/productService';
+import { ApiProductService } from '../services/apiProductService';
 import CreateProduct from './admin/CreateProduct';
-import type { Product, Category as ProductCategory } from '../types/product';
+import type { Product } from '../types/product';
 import type { Category } from '../types/category';
 
 type ProductManagementView = 'list' | 'create' | 'edit';
@@ -26,33 +28,50 @@ const ProductManagement: React.FC = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const products = productService.getAllProducts();
-
-  // Load categories from API
+  // Load products and categories from API
   useEffect(() => {
-    const loadCategories = async () => {
+    const loadData = async () => {
+      setLoading(true);
+      setError(null);
+      
       try {
-        const data = await CategoryService.getCategories();
-        setCategories(data);
+        // Load products and categories in parallel
+        const [productsData, categoriesData] = await Promise.all([
+          ApiProductService.getProducts(),
+          CategoryService.getCategories()
+        ]);
+        
+        setProducts(productsData);
+        setCategories(categoriesData);
       } catch (error) {
-        console.error('Error loading categories:', error);
-        // Fallback to local categories if API fails - convert ProductCategory to Category
-        const localCategories = productService.getCategories();
-        const convertedCategories: Category[] = localCategories.map((cat: ProductCategory) => ({
-          id: cat.id,
-          name: cat.name,
-          description: cat.description,
-          image: cat.image,
-          isActive: true, // Default to active
-          sortOrder: 0, // Default sort order
-        }));
-        setCategories(convertedCategories);
+        console.error('Error loading data:', error);
+        setError('Failed to load data. Please try again.');
+      } finally {
+        setLoading(false);
       }
     };
 
-    loadCategories();
+    loadData();
   }, []);
+
+  const refreshData = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const productsData = await ApiProductService.getProducts();
+      setProducts(productsData);
+    } catch (error) {
+      console.error('Error refreshing products:', error);
+      setError('Failed to refresh data. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Filter products based on search and category
   const filteredProducts = useMemo(() => {
@@ -75,13 +94,17 @@ const ProductManagement: React.FC = () => {
     return filtered;
   }, [products, searchQuery, selectedCategory]);
 
-  const handleDeleteProduct = (productId: string) => {
+  const handleDeleteProduct = async (productId: string) => {
     if (deleteConfirm === productId) {
-      productService.deleteProduct(productId);
-      setDeleteConfirm(null);
-      // Force re-render by updating state
-      setSearchQuery(prev => prev + ' ');
-      setSearchQuery(prev => prev.trim());
+      try {
+        await ApiProductService.deleteProduct(productId);
+        setDeleteConfirm(null);
+        // Refresh the products list
+        await refreshData();
+      } catch (error) {
+        console.error('Error deleting product:', error);
+        setError('Failed to delete product. Please try again.');
+      }
     } else {
       setDeleteConfirm(productId);
     }
@@ -99,14 +122,45 @@ const ProductManagement: React.FC = () => {
           <h1 className="text-3xl font-bold text-white mb-2">Product Management</h1>
           <p className="text-gray-400">Manage your product catalog</p>
         </div>
-        <Button 
-          onClick={() => setCurrentView('create')}
-          className="bg-orange-500 hover:bg-orange-600 text-white"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add Product
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={refreshData}
+            disabled={loading}
+            variant="outline"
+            className="border-gray-600 text-gray-300 hover:text-white hover:bg-gray-800"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          <Button 
+            onClick={() => setCurrentView('create')}
+            className="bg-orange-500 hover:bg-orange-600 text-white"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Product
+          </Button>
+        </div>
       </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-900/20 border border-red-800 rounded-xl p-4 mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Trash2 className="h-5 w-5 text-red-400" />
+              <span className="text-red-400">{error}</span>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setError(null)}
+              className="border-red-600 text-red-400 hover:text-red-300 hover:bg-red-900/30"
+            >
+              <X className="h-3 w-3" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Search and Filter Bar */}
       <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-6">
@@ -291,7 +345,10 @@ const ProductManagement: React.FC = () => {
   const renderCreateProduct = () => (
     <CreateProduct 
       onCancel={() => setCurrentView('list')}
-      onCreated={() => setCurrentView('list')}
+      onCreated={async () => {
+        await refreshData();
+        setCurrentView('list');
+      }}
     />
   );
 
