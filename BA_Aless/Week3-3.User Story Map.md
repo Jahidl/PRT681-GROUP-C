@@ -28,3 +28,5 @@
     - Story: Add new product
     - Story: Edit product details
     - Story: Remove product
+
+![User story map](images/User_Story_Map.png)
